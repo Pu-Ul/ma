@@ -1,8 +1,10 @@
 import streamlit as st
 import streamlit.components.v1 as components
 
-st.set_page_config(page_title="PauGaR POKER PRO", layout="centered")
+# Configuración de la página para móvil
+st.set_page_config(page_title="PauGaR - VISIÓN GIGANTE", layout="centered")
 
+# CÓDIGO ÚNICO (HTML + CSS + JS)
 html_code = """
 <!DOCTYPE html>
 <html>
@@ -10,80 +12,129 @@ html_code = """
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #000; color: #fff; text-align: center; margin: 0; padding: 10px; }
-        
-        /* SELECTOR DE CIEGAS */
-        .bb-selector { display: flex; justify-content: space-around; margin-bottom: 12px; background: #111; padding: 6px; border-radius: 10px; border: 1px solid #333; }
-        .bb-btn { flex: 1; margin: 0 4px; font-size: 0.8rem; padding: 12px 0; background: #222; border: 1px solid #444; color: #888; border-radius: 6px; cursor: pointer; }
-        .bb-btn.active { background: #ffcc00 !important; color: #000 !important; font-weight: bold; border-color: #fff; }
+        body { 
+            font-family: 'Arial Black', sans-serif; 
+            background: #000; 
+            color: #fff; 
+            text-align: center; 
+            margin: 0; 
+            padding: 5px; 
+        }
 
-        /* GRID DE CARTAS */
-        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; max-width: 400px; margin: 0 auto; }
-        .c-btn { padding: 18px 0; font-size: 1.5rem; background: #1a1a1a; color: #fff; border: 1px solid #333; border-radius: 8px; cursor: pointer; }
-        .c-btn.active { background: #00ff00 !important; color: #000 !important; font-weight: bold; }
-        
-        /* SELECTOR SUITED */
-        .suit-main { display: flex; gap: 10px; margin: 15px auto; max-width: 400px; }
-        .s-btn { flex: 1; padding: 18px; font-size: 1rem; font-weight: bold; border-radius: 10px; border: 2px solid #333; background: #1a1a1a; color: #666; cursor: pointer; }
-        .s-btn.active-s { background: #0055ff !important; color: #fff !important; border-color: #fff; }
-        .s-btn.active-o { background: #444 !important; color: #fff !important; border-color: #bbb; }
+        /* TÍTULO PAUGAR */
+        .footer-name { font-size: 1.2rem; color: #444; margin-top: 15px; }
+        .footer-name b { color: #00ff00; }
 
-        /* RESULTADOS */
-        #res { display: none; margin-top: 10px; border: 3px solid #00ff00; background: #050505; padding: 20px; border-radius: 15px; box-shadow: 0 0 15px rgba(0,255,0,0.3); }
-        .dec { font-size: 2.6rem; font-weight: bold; margin-bottom: 5px; }
+        /* BOTONES DE CARTAS - TAMAÑO GIGANTE */
+        .grid { 
+            display: grid; 
+            grid-template-columns: repeat(4, 1fr); 
+            gap: 10px; 
+            max-width: 100%; 
+            margin: 10px auto; 
+        }
+        .c-btn { 
+            padding: 25px 0; 
+            font-size: 2.5rem; 
+            background: #1a1a1a; 
+            color: #fff; 
+            border: 3px solid #333; 
+            border-radius: 15px; 
+            font-weight: bold; 
+        }
+        .c-btn.active { 
+            background: #00ff00 !important; 
+            color: #000 !important; 
+            border: 5px solid #fff; 
+        }
         
-        .dream-container { background: #111; padding: 12px; border-radius: 10px; border-left: 5px solid #ffcc00; margin: 15px 0; text-align: left; }
-        .dream-label { font-size: 0.7rem; color: #ffcc00; font-weight: bold; display: block; margin-bottom: 4px; }
-        .dream-text { font-size: 1.1rem; color: #fff; font-weight: bold; }
+        /* BOTONES DE PALO - VISIBLES */
+        .suit-box { 
+            display: flex; 
+            gap: 15px; 
+            margin: 20px auto; 
+        }
+        .s-btn { 
+            flex: 1; 
+            padding: 35px 10px; 
+            font-size: 1.8rem; 
+            font-weight: 900; 
+            border-radius: 20px; 
+            border: 4px solid #333; 
+            background: #1a1a1a; 
+            color: #fff; 
+        }
+        .active-s { background: #0055ff !important; border-color: #fff !important; box-shadow: 0 0 20px #0055ff; }
+        .active-o { background: #555 !important; border-color: #fff !important; }
 
-        .btn-clear { width: 100%; padding: 22px; background: #e74c3c; color: #fff; font-size: 1.4rem; font-weight: bold; border: none; border-radius: 12px; margin-top: 15px; cursor: pointer; }
-
-        /* HISTORIAL */
-        .history-section { margin-top: 25px; text-align: left; background: #111; padding: 15px; border-radius: 10px; border: 1px solid #222; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
-        td { padding: 10px 5px; border-bottom: 1px solid #222; }
-        .h-push { color: #00ff00; font-weight: bold; }
-        .h-fold { color: #ff4444; }
+        /* RESULTADO TIPO SEMÁFORO (GIGANTE) */
+        #res { 
+            display: none; 
+            margin-top: 20px; 
+            padding: 50px 10px; 
+            border-radius: 35px; 
+        }
+        .dec-txt { 
+            font-size: 6rem; 
+            font-weight: 900; 
+            margin: 0; 
+            letter-spacing: -2px;
+            text-shadow: 2px 2px #000;
+        }
         
-        .btn-exp { width: 100%; padding: 12px; background: #27ae60; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin: 10px 0; }
-        .footer { margin-top: 30px; padding: 20px; font-size: 0.9rem; color: #444; border-top: 1px solid #111; }
-        .footer b { color: #00ff00; text-shadow: 0 0 5px rgba(0,255,0,0.3); }
+        /* EL SUEÑO - TEXTO GRANDE */
+        .dream-box { 
+            margin-top: 25px; 
+            background: rgba(0,0,0,0.6); 
+            padding: 20px; 
+            border-radius: 20px; 
+            border: 3px dashed #ffcc00;
+        }
+        .dream-val { 
+            font-size: 2.5rem; 
+            color: #ffcc00; 
+            font-weight: bold; 
+        }
+
+        .btn-reset { 
+            width: 100%; 
+            padding: 35px; 
+            background: #fff; 
+            color: #000; 
+            font-size: 2.5rem; 
+            font-weight: 900; 
+            border: none; 
+            border-radius: 25px; 
+            margin-top: 30px; 
+            box-shadow: 0 5px 15px rgba(255,255,255,0.3);
+        }
     </style>
 </head>
 <body>
-    <div class="bb-selector">
-        <button class="bb-btn" id="bb1" onclick="setBB(10)"> <10 BB </button>
-        <button class="bb-btn active" id="bb2" onclick="setBB(30)"> 10-40 BB </button>
-        <button class="bb-btn" id="bb3" onclick="setBB(50)"> 40+ BB </button>
-    </div>
 
     <div class="grid" id="g"></div>
     
-    <div class="suit-main">
-        <button class="s-btn" id="btnS" onclick="setS(true)">SUITED (s)</button>
-        <button class="s-btn" id="btnO" onclick="setS(false)">OFFSUIT (o)</button>
+    <div class="suit-box">
+        <button class="s-btn" id="btnS" onclick="setS(true)">MISMO<br>PALO</button>
+        <button class="s-btn" id="btnO" onclick="setS(false)">PALO<br>DISTINTO</button>
     </div>
 
     <div id="res">
-        <div id="dec" class="dec"></div>
-        <div class="dream-container">
-            <span class="dream-label">✨ EL SUEÑO (POTENCIAL MAX)</span>
-            <span id="dream" class="dream-text"></span>
+        <p id="dec" class="dec-txt"></p>
+        
+        <div class="dream-box">
+            <span style="font-size: 1.5rem; color: #fff; display:block; margin-bottom:10px;">EL SUEÑO:</span>
+            <span id="dream" class="dream-val"></span>
         </div>
-        <button class="btn-clear" onclick="reset()">SIGUIENTE MANO</button>
+        
+        <button class="btn-reset" onclick="reset()">OTRA MANO</button>
     </div>
 
-    <div class="history-section">
-        <span style="color:#ffcc00; font-weight:bold; font-size:0.9rem;">📈 TENDENCIAS PauGaR</span>
-        <table><tbody id="hBody"></tbody></table>
-        <button onclick="exportHistory()" class="btn-exp">📤 COPIAR HISTORIAL</button>
-    </div>
-
-    <div class="footer">Developed by <b>PauGaR</b></div>
+    <div class="footer-name">Developed by <b>PauGaR</b></div>
 
     <script>
-        const cards = ['A','K','Q','J','T','9','8','7','6','5','4','3','2'];
-        let sel = []; let same = null; let bbs = 30;
+        const cards = ['A','K','Q','J','10','9','8','7','6','5','4','3','2'];
+        let sel = []; let same = null;
 
         function init() {
             const g = document.getElementById('g'); g.innerHTML = "";
@@ -101,20 +152,12 @@ html_code = """
                 };
                 g.appendChild(b);
             });
-            updateHistoryTable();
-        }
-
-        function setBB(v) { 
-            bbs = v; 
-            document.querySelectorAll('.bb-btn').forEach(b => b.classList.remove('active'));
-            event.target.classList.add('active');
-            if(sel.length == 2) calc();
         }
 
         function setS(v) { 
             same = v; 
-            document.getElementById('btnS').className = v ? "s-btn active-s" : "s-btn";
-            document.getElementById('btnO').className = !v ? "s-btn active-o" : "s-btn";
+            document.getElementById('btnS').classList.toggle('active-s', v);
+            document.getElementById('btnO').classList.toggle('active-o', !v);
             if(sel.length == 2) calc();
         }
 
@@ -124,52 +167,39 @@ html_code = """
             const isP = h1 === h2;
             const dist = Math.abs(idx1 - idx2);
             
-            document.getElementById('res').style.display = 'block';
-
-            // Lógica El Sueño
-            let dr = document.getElementById('dream');
-            if (isP) dr.innerText = "PÓKER / FULL HOUSE";
-            else if (same) dr.innerText = (dist === 1 || (h1==='A' && h2==='K')) ? "ESC. COLOR / COLOR NUT" : "COLOR AL " + h1;
-            else if (dist <= 4) dr.innerText = "ESCALERA NUT";
-            else dr.innerText = "DOBLES / TOP PAIR";
-
-            // Lógica Decisión
-            let d = document.getElementById('dec');
-            let action = ""; let cls = "";
-            if (isP && idx1 <= 5) { action = (bbs<15)?"ALL-IN":"RAISE"; cls="h-push"; d.style.color="#00ff00"; }
-            else if (h1==='A' && (idx2<=3 || same)) { action = (bbs<12)?"SHOVE":"RAISE"; cls="h-push"; d.style.color="#00ff00"; }
-            else { action = "FOLD"; cls="h-fold"; d.style.color="#ff4444"; }
+            const r = document.getElementById('res');
+            const d = document.getElementById('dec');
+            const dr = document.getElementById('dream');
             
-            d.innerText = action;
-            saveToHistory(`${h1}${h2}${isP?'':(same?'s':'o')}`, bbs, action, cls);
-        }
+            r.style.display = 'block';
 
-        function saveToHistory(mano, bb, acc, cls) {
-            let hist = JSON.parse(localStorage.getItem('p_hist')) || [];
-            hist.unshift({mano, bb, acc, cls, t: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})});
-            if(hist.length > 15) hist.pop();
-            localStorage.setItem('p_hist', JSON.stringify(hist));
-            updateHistoryTable();
-        }
+            // --- LÓGICA DE DECISIÓN ---
+            if (isP && idx1 <= 7) { 
+                d.innerText = "ENTRA"; 
+                r.style.backgroundColor = "#27ae60"; // VERDE
+            } else if (h1 === 'A' || (h1 === 'K' && (same || idx2 <= 3))) {
+                d.innerText = "ENTRA"; 
+                r.style.backgroundColor = "#27ae60"; // VERDE
+            } else if (same && dist <= 2 && idx1 <= 8) {
+                d.innerText = "ENTRA"; 
+                r.style.backgroundColor = "#27ae60"; // VERDE
+            } else {
+                d.innerText = "FUERA"; 
+                r.style.backgroundColor = "#c0392b"; // ROJO
+            }
 
-        function updateHistoryTable() {
-            let hist = JSON.parse(localStorage.getItem('p_hist')) || [];
-            document.getElementById('hBody').innerHTML = hist.map(h => 
-                `<tr><td><b>${h.mano}</b></td><td>${h.bb}BB</td><td class="${h.cls}">${h.acc}</td><td style="color:#444;font-size:0.7rem">${h.t}</td></tr>`
-            ).join('');
-        }
-
-        function exportHistory() {
-            let hist = JSON.parse(localStorage.getItem('p_hist')) || [];
-            let txt = "PAUGAR REPORT:\\n" + hist.map(h => `${h.t} - ${h.mano}: ${h.acc}`).join("\\n");
-            navigator.clipboard.writeText(txt).then(() => alert("Copiado al portapapeles"));
+            // --- LÓGICA DEL SUEÑO ---
+            if (isP) dr.innerText = "TRÍO / PÓKER";
+            else if (same) dr.innerText = "COLOR 🎨";
+            else if (dist <= 4) dr.innerText = "ESCALERA 📏";
+            else dr.innerText = "PAR ALTO 2️⃣";
         }
 
         function reset() {
             sel = []; same = null;
             document.getElementById('res').style.display = 'none';
-            document.getElementById('btnS').className = "s-btn";
-            document.getElementById('btnO').className = "s-btn";
+            document.getElementById('btnS').classList.remove('active-s');
+            document.getElementById('btnO').classList.remove('active-o');
             init();
         }
         init();
@@ -177,4 +207,6 @@ html_code = """
 </body>
 </html>
 """
-components.html(html_code, height=1100, scrolling=True)
+
+# Renderizado final en la App
+components.html(html_code, height=1200, scrolling=True)
