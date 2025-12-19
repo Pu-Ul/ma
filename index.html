@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MTT 50BB PRO VISUAL</title>
+    <style>
+        body { font-family: 'Impact', sans-serif; background: #000; color: #fff; text-align: center; margin: 0; padding: 10px; }
+        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; max-width: 400px; margin: 0 auto; }
+        .c-btn { padding: 15px 0; font-size: 1.4rem; background: #222; color: #fff; border: 2px solid #444; border-radius: 10px; cursor: pointer; }
+        .c-btn.active { background: #00ff00; color: #000; border-color: #fff; }
+        
+        .suit-toggle { display: flex; gap: 10px; max-width: 400px; margin: 15px auto; }
+        .s-btn { flex: 1; padding: 18px; font-size: 1rem; border-radius: 10px; border: 2px solid #444; background: #1a1a1a; color: #fff; }
+        .s-btn.active { background: #007bff; border-color: #fff; }
+
+        .result-box { background: #111; border: 2px solid #333; border-radius: 20px; padding: 15px; margin-top: 15px; display: none; max-width: 400px; margin-left: auto; margin-right: auto; }
+        .action-banner { font-size: 2.2rem; padding: 10px; border-radius: 10px; margin-bottom: 20px; text-transform: uppercase; }
+        .raise { background: #27ae60; color: #fff; }
+        .fold { background: #c0392b; color: #fff; }
+
+        .option { background: #1a1a1a; margin-bottom: 20px; border-radius: 12px; padding: 15px; border: 1px solid #333; }
+        .opt-title { font-size: 1rem; color: #ffcc00; display: block; margin-bottom: 10px; letter-spacing: 1px; }
+        .cards-row { display: flex; justify-content: center; gap: 10px; margin-bottom: 12px; }
+        
+        .card { background: #fff; color: #000; width: 60px; height: 85px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: bold; box-shadow: 2px 2px 5px rgba(0,0,0,0.5); position: relative; }
+        .card::after { content: '♥'; font-size: 0.8rem; position: absolute; bottom: 5px; right: 5px; color: red; }
+        .black::after { content: '♠'; color: #000; }
+
+        .argument { font-family: sans-serif; font-size: 0.85rem; color: #ddd; line-height: 1.3; background: #000; padding: 10px; border-radius: 5px; text-align: left; }
+        .argument b { color: #00ff00; }
+    </style>
+</head>
+<body>
+
+    <div class="grid" id="mainGrid"></div>
+
+    <div class="suit-toggle">
+        <button class="s-btn" id="sTrue" onclick="setSuit(true)">MISMA PINTA (s)</button>
+        <button class="s-btn" id="sFalse" onclick="setSuit(false)">DISTINTA (o)</button>
+    </div>
+
+    <div id="result" class="result-box">
+        <div id="actionBanner" class="action-banner"></div>
+        
+        <div class="option">
+            <span class="opt-title">OPCIÓN 1: EL SUEÑO</span>
+            <div class="cards-row" id="row1"></div>
+            <div class="argument" id="arg1"></div>
+        </div>
+
+        <div class="option">
+            <span class="opt-title">OPCIÓN 2: GOLPE FUERTE</span>
+            <div class="cards-row" id="row2"></div>
+            <div class="argument" id="arg2"></div>
+        </div>
+    </div>
+
+    <button onclick="location.reload()" style="margin:20px; background:none; border:1px solid #333; color:#555; padding:10px; border-radius:5px;">LIMPIAR</button>
+
+<script>
+    const ranks = ['A','K','Q','J','T','9','8','7','6','5','4','3','2'];
+    let sel = []; let same = null;
+
+    const grid = document.getElementById('mainGrid');
+    ranks.forEach(r => {
+        const b = document.createElement('button');
+        b.className = 'c-btn';
+        b.innerText = r;
+        b.onclick = () => {
+            if(sel.length < 2 && !b.classList.contains('active')) {
+                sel.push(r);
+                b.classList.add('active');
+                if(sel.length === 2 && sel[0] === sel[1]) calculate();
+            }
+        };
+        grid.appendChild(b);
+    });
+
+    function setSuit(v) {
+        same = v;
+        document.getElementById('sTrue').classList.toggle('active', v);
+        document.getElementById('sFalse').classList.toggle('active', !v);
+        if(sel.length === 2) calculate();
+    }
+
+    function drawCard(v, isBlack) {
+        return `<div class="card ${isBlack ? 'black' : ''}">${v}</div>`;
+    }
+
+    function calculate() {
+        if(sel.length < 2 || (sel[0] !== sel[1] && same === null)) return;
+        document.getElementById('result').style.display = 'block';
+        let h1 = sel[0], h2 = sel[1];
+        
+        let isPlayable = (h1 === h2 || h1 === 'A' || h1 === 'K' || (same && ranks.indexOf(h1) < 6));
+        const banner = document.getElementById('actionBanner');
+        banner.innerText = isPlayable ? "RAISE 🔥" : "FOLD 💀";
+        banner.className = "action-banner " + (isPlayable ? "raise" : "fold");
+
+        let r1 = "", r2 = "", a1 = "", a2 = "";
+
+        if(h1 === 'A' && h2 === 'K') {
+            r1 = drawCard('Q',true) + drawCard('J',false) + drawCard('T',true);
+            a1 = "<b>ESCALERA BROADWAY:</b> Es la mejor mano posible sin color. Bloqueas los Ases y Reyes del rival. Aquí vas All-in.";
+            r2 = drawCard('A',false) + drawCard('K',true) + drawCard('5',false);
+            a2 = "<b>TOP TWO PAIRS:</b> Destruyes a cualquiera con un As peor. Con 50bb tu misión es sacar todo el stack en el Turn.";
+        } else if(h1 === h2) {
+            r1 = drawCard(h1,true) + drawCard('4',false) + drawCard('9',true);
+            a1 = "<b>EL SET (TRIO):</b> Escondido y letal. Con 50bb es una trampa mortal contra parejas altas. No necesitas proteger, deja que apuesten.";
+            r2 = drawCard('2',true) + drawCard('5',false) + drawCard('8',true);
+            a2 = "<b>OVERPAIR:</b> Si el flop es bajo, tu pareja es la más fuerte. Apuesta fuerte para que no vean cartas gratis.";
+        } else if(same) {
+            r1 = drawCard('X',false) + drawCard('X',false) + drawCard('X',false);
+            a1 = "<b>FLUSH (COLOR):</b> Al ser del mismo palo, buscas el color. Si el rival tiene un As solo, está muerto.";
+            r2 = drawCard(h1,true) + drawCard('2',false) + drawCard('7',true);
+            a2 = "<b>TOP PAIR + DRAW:</b> Tienes la carta más alta y posibilidad de color. Tienes mucha <b>EQUIDAD</b> para presionar.";
+        } else {
+            r1 = drawCard(h1,true) + drawCard(h2,false) + drawCard('2',true);
+            a1 = "<b>DOBLES PAREJAS:</b> La mejor forma de ganar con cartas diferentes. Superas a los Ases solitarios.";
+            r2 = drawCard(h1,false) + drawCard('Q',true) + drawCard('T',false);
+            a2 = "<b>TOP PAIR:</b> Solo tienes una pareja. Si el rival apuesta muy fuerte, ten cuidado con el Kicker (la segunda carta).";
+        }
+
+        document.getElementById('row1').innerHTML = r1;
+        document.getElementById('row2').innerHTML = r2;
+        document.getElementById('arg1').innerHTML = a1;
+        document.getElementById('arg2').innerHTML = a2;
+    }
+</script>
+</body>
+</html>
