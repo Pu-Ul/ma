@@ -1,179 +1,244 @@
 import streamlit as st
 import streamlit.components.v1 as components
 
-st.set_page_config(page_title="PauGaR Radar Elite", layout="centered")
+st.set_page_config(page_title="POKER RADAR + HISTORIAL", layout="centered")
 
-# Estilo para ocultar elementos innecesarios de Streamlit y maximizar espacio
-st.markdown("""
-    <style>
-    .block-container { padding: 0.5rem 1rem; }
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
-    </style>
-""", unsafe_allow_html=True)
-
-html_code = """
+html_code = r"""
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #000; color: #fff; text-align: center; margin: 0; padding: 2px; overflow-x: hidden; }
-        
-        /* CABECERA JERÁRQUICA */
-        .top-bar { display: flex; justify-content: space-between; background: #111; padding: 10px; border-radius: 10px; border: 1px solid #222; margin-bottom: 8px; }
-        .h-label { font-size: 0.55rem; color: #ffcc00; font-weight: bold; text-transform: uppercase; display: block; }
-        .h-val { font-size: 0.75rem; color: #fff; font-weight: bold; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <style>
+    body { font-family: sans-serif; background: #000; color: #fff; text-align: center; margin: 0; padding: 10px; }
+    .bb-selector { display: flex; justify-content: space-around; margin-bottom: 12px; background: #111; padding: 5px; border-radius: 8px; }
+    .bb-btn { flex: 1; margin: 0 3px; font-size: 0.75rem; padding: 10px 0; background: #222; border: 1px solid #444; color: #888; border-radius: 5px; }
+    .bb-btn.active { background: #ffcc00 !important; color: #000 !important; font-weight: bold; }
 
-        /* PASO 1: TECLADO COMPACTO (13 BOTONES) */
-        .p1-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 8px; }
-        .p1-btn { padding: 12px 0; font-size: 1rem; background: #1a1a1a; color: #fff; border: 1px solid #333; border-radius: 8px; font-weight: bold; transition: 0.2s; }
-        .p1-btn.active { background: #00ff00 !important; color: #000 !important; border: 2px solid #fff; }
-        
-        .suit-box { display: flex; gap: 6px; margin-bottom: 12px; }
-        .s-btn { flex: 1; padding: 15px; font-size: 0.85rem; border-radius: 10px; border: 1px solid #333; background: #111; color: #888; font-weight: bold; }
-        .active-s { background: #0055ff !important; color: #fff !important; box-shadow: 0 0 10px #0055ff; }
-        .active-o { background: #444 !important; color: #fff !important; }
+    .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; max-width: 400px; margin: 0 auto; }
+    .c-btn { padding: 15px 0; font-size: 1.4rem; background: #1a1a1a; color: #fff; border: 1px solid #333; border-radius: 6px; }
+    .c-btn.active { background: #00ff00 !important; color: #000 !important; font-weight: bold; }
 
-        /* PANEL DE DECISIÓN INTELIGENTE */
-        #res-box { display: none; padding: 18px 10px; border-radius: 20px; margin-top: 8px; border: 4px solid #fff; transition: 0.3s; }
-        .dec-txt { font-size: 3rem; font-weight: 900; margin: 0; text-shadow: 2px 2px #000; }
-        .dream-lbl { font-size: 0.7rem; color: #ffcc00; font-weight: bold; margin-top: 8px; text-transform: uppercase; display: block; }
+    .suit-main { display: flex; gap: 8px; margin: 12px auto; max-width: 400px; }
+    .s-btn { flex: 1; padding: 15px; font-size: 1rem; font-weight: bold; border-radius: 8px; border: 1px solid #333; background: #1a1a1a; color: #555; }
+    .s-btn.active-s { background: #0055ff !important; color: #fff !important; }
+    .s-btn.active-o { background: #444 !important; color: #fff !important; }
 
-        /* PASO 2: MATRIZ HORIZONTAL 52 (CERO SCROLL) */
-        #paso2 { display: none; margin-top: 20px; border-top: 2px dashed #444; padding-top: 15px; }
-        .matrix-52 { display: grid; grid-template-columns: repeat(13, 1fr); gap: 1px; width: 100vw; margin-left: -2px; }
-        .m-card { padding: 10px 0; font-size: 0.55rem; background: #111; color: #fff; border: 1px solid #222; font-weight: bold; }
-        .m-card.active { background: #fff !important; color: #000 !important; border: 1px solid #00ff00; }
-        .p-h, .p-d { color: #ff8888; border-bottom: 2px solid #ff4444; }
-        .p-s { border-bottom: 2px solid #555; }
-        .p-t { color: #88ff88; border-bottom: 2px solid #00ff00; }
+    #res { display: none; margin-top: 10px; border: 2px solid #00ff00; background: #050505; padding: 15px; border-radius: 12px; }
+    .dec { font-size: 2.2rem; font-weight: bold; margin-bottom: 2px; }
+    .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .stat-card { background: #111; padding: 10px; border-radius: 8px; }
 
-        .f-display { display: flex; justify-content: center; gap: 8px; margin: 15px 0; }
-        .ui-card { width: 42px; height: 60px; background: #fff; color: #000; border-radius: 6px; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 1rem; font-weight: 900; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
-        .ana-box { background: #111; padding: 10px; border-radius: 10px; font-size: 0.8rem; text-align: left; border-left: 5px solid #ffcc00; margin-top: 10px; line-height: 1.4; }
+    .btn-clear { width: 100%; padding: 18px; background: #e74c3c; color: #fff; font-size: 1.3rem; font-weight: bold; border: none; border-radius: 10px; margin-top: 12px; }
 
-        /* HISTORIAL Y EXPORTACIÓN */
-        .hist-container { margin-top: 20px; background: #0a0a0a; padding: 12px; border-radius: 12px; border: 1px solid #222; }
-        .h-row { display: flex; justify-content: space-between; border-bottom: 1px solid #222; padding: 6px 0; font-size: 0.7rem; color: #bbb; }
-        .v-input { background: #222; border: 1px solid #444; color: #ffcc00; padding: 4px; width: 75px; border-radius: 5px; font-weight: bold; text-align: center; }
-        .btn-exp { width: 100%; padding: 14px; background: #27ae60; color: #fff; border: none; border-radius: 10px; font-weight: bold; margin-top: 10px; cursor: pointer; }
+    /* HISTORIAL */
+    .history-section { margin-top: 20px; text-align: left; background: #111; padding: 15px; border-radius: 10px; border: 1px solid #222; max-width: 420px; margin-left: auto; margin-right: auto; }
+    .history-title { color: #ffcc00; font-size: 0.9rem; margin-bottom: 10px; display: block; font-weight: bold; }
+    .small { font-size: 0.8rem; color: #aaa; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    th { border-bottom: 1px solid #333; padding: 6px 5px; color: #666; text-align: left; }
+    td { padding: 8px 5px; border-bottom: 1px solid #222; }
+    .h-push { color: #00ff00; font-weight: bold; }
+    .h-fold { color: #ff4444; font-weight: bold; }
+    .h-raise { color: #ffcc00; font-weight: bold; }
 
-        .btn-reset { width: 100%; padding: 25px; background: #fff; color: #000; font-size: 1.8rem; font-weight: 900; border-radius: 18px; margin-top: 25px; border: none; cursor: pointer; }
-    </style>
+    .btn-del { background: none; border: 1px solid #444; color: #aaa; font-size: 0.8rem; padding: 10px; border-radius: 6px; cursor: pointer; width: 100%; margin-top: 10px; }
+    .footer { margin-top: 20px; padding: 15px; font-size: 0.9rem; color: #444; }
+    .footer b { color: #00ff00; }
+  </style>
 </head>
+
 <body>
-    <div class="top-bar">
-        <div class="h-unit"><span class="h-label">STACK</span><span class="h-val">30 BB (Promedio)</span></div>
-        <div class="h-unit"><span class="h-label">POSICIÓN</span><span class="h-val">LATE / BTN</span></div>
+  <div class="bb-selector">
+    <button class="bb-btn" id="bb1" data-bb="10">&lt;10 BB</button>
+    <button class="bb-btn active" id="bb2" data-bb="30">10-40 BB</button>
+    <button class="bb-btn" id="bb3" data-bb="50">40+ BB</button>
+  </div>
+
+  <div class="grid" id="g"></div>
+
+  <div class="suit-main">
+    <button class="s-btn" id="btnS">SUITED (s)</button>
+    <button class="s-btn" id="btnO">OFFSUIT (o)</button>
+  </div>
+
+  <div id="res">
+    <div id="dec" class="dec"></div>
+    <div class="stats">
+      <div class="stat-card"><span>EQUITY</span><br><span id="itm" style="color:#00ff00; font-size: 1.4rem;"></span></div>
+      <div class="stat-card"><span>RANGO</span><br><span id="rnk" style="font-size: 1.4rem;"></span></div>
     </div>
+    <button class="btn-clear" onclick="resetHand()">NUEVA MANO</button>
+  </div>
 
-    <div class="p1-grid" id="grid1"></div>
-    <div class="suit-box">
-        <button class="s-btn" id="btnS" onclick="setSuited(true)">SUITED (s)</button>
-        <button class="s-btn" id="btnO" onclick="setSuited(false)">OFFSUIT (o)</button>
-    </div>
+  <div class="history-section">
+    <span class="history-title">📈 TENDENCIAS RECIENTES (PauGaR)</span>
 
-    <div id="res-box">
-        <p id="decision" class="dec-txt"></p>
-        <span id="dream" class="dream-lbl"></span>
-        
-        <div id="paso2">
-            <span class="h-label" style="color:#00ff00">ALIMENTAR FLOP (PINTAS)</span>
-            <div class="matrix-52" id="matrix52"></div>
-            <div id="f-view" class="f-display"></div>
-            <div id="analysis" class="ana-box" style="display:none;"></div>
-        </div>
+    <div class="small" id="vppLine">VPP: 0% (0/0 jugadas)</div>
 
-        <div class="hist-container">
-            <span class="h-label">HISTORIAL DE SESIÓN</span>
-            <div id="hList"></div>
-            <button class="btn-exp" onclick="exportData()">📤 COPIAR REPORTE PARA ANÁLISIS</button>
-        </div>
+    <table>
+      <thead><tr><th>MANO</th><th>BB</th><th>ACCIÓN</th></tr></thead>
+      <tbody id="hBody"></tbody>
+    </table>
 
-        <button class="btn-reset" onclick="window.location.reload()">SIGUIENTE MANO</button>
-    </div>
+    <button onclick="clearHistory()" class="btn-del">BORRAR HISTORIAL COMPLETO</button>
+  </div>
 
-    <script>
-        const ranks = ['A','K','Q','J','10','9','8','7','6','5','4','3','2'];
-        const suits = [{s:'♠',c:'p-s'},{s:'♥',c:'p-h'},{s:'♦',c:'p-d'},{s:'♣',c:'p-t'}];
-        let hand = []; let isSuited = null; let flop = [];
-        let history = JSON.parse(localStorage.getItem('paugar_final_data')) || [];
+  <div class="footer">Developed by <b>PauGaR</b></div>
 
-        function init() {
-            const g1 = document.getElementById('grid1');
-            ranks.forEach(r => {
-                const b = document.createElement('button'); b.innerText = r; b.className = "p1-btn";
-                b.onclick = () => { if(hand.length < 2) { hand.push(r); b.classList.add('active'); if(hand.length==2 && isSuited!==null) calcPre(); } };
-                g1.appendChild(b);
-            });
-            const g52 = document.getElementById('matrix52');
-            suits.forEach(s => {
-                ranks.forEach(r => {
-                    const b = document.createElement('button'); b.innerText = r+s.s; b.className = `m-card ${s.c}`;
-                    b.onclick = () => { if(flop.length < 3 && !b.classList.contains('active')) { flop.push({r,s:s.s}); b.classList.add('active'); renderFlop(); } };
-                    g52.appendChild(b);
-                });
-            });
-            updateHistory();
+  <script>
+    const cards = ['A','K','Q','J','T','9','8','7','6','5','4','3','2'];
+
+    let sel = [];
+    let suited = null;   // true = suited, false = offsuit
+    let bbs = 30;
+
+    function initGrid() {
+      const g = document.getElementById('g');
+      g.innerHTML = "";
+      cards.forEach(c => {
+        const b = document.createElement('button');
+        b.innerText = c;
+        b.className = "c-btn";
+        b.onclick = () => pickCard(c, b);
+        g.appendChild(b);
+      });
+    }
+
+    function pickCard(c, btn) {
+      if (sel.length >= 2) return;
+      sel.push(c);
+      btn.classList.add('active');
+
+      if (sel.length === 2) {
+        // parejas no necesitan suited/offsuit
+        if (sel[0] === sel[1]) {
+          suited = false;
+          calc();
+        } else if (suited !== null) {
+          calc();
         }
+      }
+    }
 
-        function setSuited(v) { isSuited = v; if(hand.length == 2) calcPre(); }
+    function setBB(v, clickedBtn) {
+      bbs = v;
+      document.querySelectorAll('.bb-btn').forEach(b => b.classList.remove('active'));
+      clickedBtn.classList.add('active');
+      // si ya hay 2 cartas y suited definido, recalcula
+      if (sel.length === 2 && (sel[0] === sel[1] || suited !== null)) calc();
+    }
 
-        function calcPre() {
-            const box = document.getElementById('res-box'); const dec = document.getElementById('decision');
-            const dream = document.getElementById('dream');
-            box.style.display = 'block';
-            
-            const r1 = hand[0], r2 = hand[1];
-            // LÓGICA INTELIGENTE: Parejas, Ases, o K-Suited entran.
-            const isOk = (r1 === r2 || r1 === 'A' || r2 === 'A' || (r1 === 'K' && isSuited) || (r2 === 'K' && isSuited));
-            
-            dec.innerText = isOk ? "RAISE" : "FOLD";
-            box.style.backgroundColor = isOk ? "#1b5e20" : "#b71c1c";
-            dream.innerText = (r1 === r2) ? "SUEÑO: SET / FULL HOUSE" : (isSuited ? "SUEÑO: FLUSH (COLOR)" : "SUEÑO: TOP PAIR");
+    function setSuited(v) {
+      suited = v;
+      document.getElementById('btnS').className = v ? "s-btn active-s" : "s-btn";
+      document.getElementById('btnO').className = (!v) ? "s-btn active-o" : "s-btn";
+      if (sel.length === 2 && sel[0] !== sel[1]) calc();
+    }
 
-            saveLog(hand.join("")+(isSuited?'s':'o'), dec.innerText);
-            if(isOk) document.getElementById('paso2').style.display = 'block';
-        }
+    function decisionLogic(h1, h2, isPair, idx1, idx2, suitedFlag) {
+      // Lógica ejemplo (la tuya real puede ser más completa)
+      // Devuelve {action, equity, rank, cls, color}
+      if (isPair && idx1 <= 4) {
+        return { action: "PUSH", equity: "85%", rank: "#1", cls: "h-push", color: "#00ff00" };
+      } else if (h1 === 'A' && (idx2 <= 2 || suitedFlag === true)) {
+        return { action: "RAISE", equity: "65%", rank: "#2", cls: "h-raise", color: "#ffcc00" };
+      } else {
+        return { action: "FOLD", equity: "18%", rank: "#10", cls: "h-fold", color: "#ff4444" };
+      }
+    }
 
-        function renderFlop() {
-            const view = document.getElementById('f-view');
-            view.innerHTML = flop.map(c => `<div class="ui-card" style="color:${(c.s=='♥'||c.s=='♦')?'red':'black'}"><span>${c.r}</span><span>${c.s}</span></div>`).join('');
-            if(flop.length === 3) {
-                const ana = document.getElementById('analysis'); ana.style.display = 'block';
-                const connect = flop.some(f => hand.includes(f.r));
-                const paired = new Set(flop.map(f => f.r)).size < 3;
-                ana.innerHTML = `<b>ESTADO:</b> ${connect ? "✅ IMPACTO DIRECTO" : "❌ MESA SECA / FALLO"}<br><b>RIESGO:</b> ${paired ? "⚠️ MESA DOBLADA (Peligro de Full)" : "✅ MESA LIMPIA"}`;
-            }
-        }
+    function calc() {
+      if (sel.length < 2) return;
+      if (sel[0] !== sel[1] && suited === null) return;
 
-        function saveLog(m, a) {
-            history.unshift({ t: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}), m, a, v: '' });
-            if(history.length > 5) history.pop();
-            localStorage.setItem('paugar_final_data', JSON.stringify(history));
-            updateHistory();
-        }
+      const h1 = sel[0], h2 = sel[1];
+      const idx1 = cards.indexOf(h1), idx2 = cards.indexOf(h2);
+      const isP = h1 === h2;
 
-        function updateHistory() {
-            document.getElementById('hList').innerHTML = history.map((x, i) => `
-                <div class="h-row">
-                    <span>${x.t} | <b>${x.m}</b> | ${x.a}</span>
-                    <input class="v-input" placeholder="Ganó con:" onchange="saveV(${i}, this.value)" value="${x.v}">
-                </div>`).join('');
-        }
+      const res = decisionLogic(h1, h2, isP, idx1, idx2, suited);
+      document.getElementById('res').style.display = 'block';
 
-        function saveV(i, val) { history[i].v = val; localStorage.setItem('paugar_final_data', JSON.stringify(history)); }
+      const d = document.getElementById('dec');
+      const i = document.getElementById('itm');
+      const r = document.getElementById('rnk');
 
-        function exportData() {
-            const txt = "REPORTE PAUGAR RADAR:\\n" + history.map(x => `${x.t} - Mano: ${x.m} - Yo: ${x.a} - Villano: ${x.v}`).join("\\n");
-            navigator.clipboard.writeText(txt).then(() => alert("✅ Reporte copiado al portapapeles."));
-        }
+      d.innerText = res.action;
+      d.style.color = res.color;
+      i.innerText = res.equity;
+      r.innerText = res.rank;
 
-        init();
-    </script>
+      const handTxt = `${h1}${h2}${isP ? '' : (suited ? 's' : 'o')}`;
+      saveToHistory(handTxt, bbs, res.action, res.cls);
+    }
+
+    function getHistory() {
+      try {
+        return JSON.parse(localStorage.getItem('poker_hist')) || [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function setHistory(history) {
+      localStorage.setItem('poker_hist', JSON.stringify(history));
+    }
+
+    function saveToHistory(mano, bb, acc, cls) {
+      let history = getHistory();
+      history.unshift({ mano, bb, acc, cls, ts: Date.now() });
+      if (history.length > 10) history.pop();
+      setHistory(history);
+      updateHistoryTable();
+    }
+
+    function updateVPP(history) {
+      const total = history.length;
+      const played = history.filter(h => (h.acc === "PUSH" || h.acc === "RAISE")).length;
+      const vpp = total === 0 ? 0 : Math.round((played / total) * 100);
+      document.getElementById('vppLine').innerText = `VPP: ${vpp}% (${played}/${total} jugadas)`;
+    }
+
+    function updateHistoryTable() {
+      const history = getHistory();
+      const body = document.getElementById('hBody');
+      body.innerHTML = history.map(h =>
+        `<tr>
+          <td>${h.mano}</td>
+          <td>${h.bb}BB</td>
+          <td class="${h.cls}">${h.acc}</td>
+        </tr>`
+      ).join('');
+      updateVPP(history);
+    }
+
+    function clearHistory() {
+      localStorage.removeItem('poker_hist');
+      updateHistoryTable();
+    }
+
+    function resetHand() {
+      sel = [];
+      suited = null;
+      document.getElementById('res').style.display = 'none';
+      document.getElementById('btnS').className = "s-btn";
+      document.getElementById('btnO').className = "s-btn";
+      initGrid();
+    }
+
+    // Bind buttons
+    document.getElementById('bb1').onclick = (e) => setBB(10, e.target);
+    document.getElementById('bb2').onclick = (e) => setBB(30, e.target);
+    document.getElementById('bb3').onclick = (e) => setBB(50, e.target);
+    document.getElementById('btnS').onclick = () => setSuited(true);
+    document.getElementById('btnO').onclick = () => setSuited(false);
+
+    // Init
+    initGrid();
+    updateHistoryTable();
+  </script>
 </body>
 </html>
 """
-components.html(html_code, height=1150, scrolling=True)
+
+components.html(html_code, height=1000, scrolling=True)
