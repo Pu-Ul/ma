@@ -1,7 +1,7 @@
 import streamlit as st
 import streamlit.components.v1 as components
 
-st.set_page_config(page_title="POKER MTT FAST", layout="centered")
+st.set_page_config(page_title="POKER RADAR PRO", layout="centered")
 
 html_code = """
 <!DOCTYPE html>
@@ -10,26 +10,34 @@ html_code = """
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
-        body { font-family: sans-serif; background: #000; color: #fff; text-align: center; margin: 0; padding: 10px; }
-        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; max-width: 400px; margin: 0 auto; }
-        button { padding: 15px 0; font-size: 1.4rem; background: #222; color: #fff; border: 1px solid #444; border-radius: 8px; cursor: pointer; }
-        button.active { background: #00ff00 !important; color: #000 !important; font-weight: bold; }
+        body { font-family: sans-serif; background: #000; color: #fff; text-align: center; margin: 0; padding: 10px; overflow-x: hidden; }
         
-        .bb-selector { display: flex; justify-content: space-around; margin: 15px auto; max-width: 400px; background: #111; padding: 10px; border-radius: 10px; }
-        .bb-btn { flex: 1; margin: 0 5px; font-size: 0.9rem; padding: 10px 0; background: #333; border: 1px solid #555; }
-        .bb-btn.active { background: #ffcc00 !important; color: #000 !important; }
+        /* SELECTOR DE CIEGAS SUPERIOR */
+        .bb-selector { display: flex; justify-content: space-around; margin-bottom: 15px; background: #111; padding: 8px; border-radius: 10px; border: 1px solid #333; }
+        .bb-btn { flex: 1; margin: 0 4px; font-size: 0.8rem; padding: 12px 0; background: #222; border: 1px solid #444; color: #888; border-radius: 6px; }
+        .bb-btn.active { background: #ffcc00 !important; color: #000 !important; font-weight: bold; border-color: #fff; }
 
-        .suit-box { display: none; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px auto; max-width: 400px; }
-        .s-btn { padding: 20px; font-size: 1.2rem; font-weight: bold; border-radius: 10px; background: #0055ff; color: #fff; border: none; }
-        .s-btn.of { background: #555; }
+        /* GRID DE CARTAS */
+        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; max-width: 400px; margin: 0 auto; }
+        .c-btn { padding: 18px 0; font-size: 1.5rem; background: #1a1a1a; color: #fff; border: 1px solid #333; border-radius: 8px; cursor: pointer; }
+        .c-btn.active { background: #00ff00 !important; color: #000 !important; font-weight: bold; }
+        
+        /* SELECTOR SUITED/OFFSUIT SIEMPRE VISIBLE */
+        .suit-main { display: flex; gap: 10px; margin: 15px auto; max-width: 400px; }
+        .s-btn { flex: 1; padding: 20px; font-size: 1.1rem; font-weight: bold; border-radius: 10px; border: 2px solid #333; background: #1a1a1a; color: #666; cursor: pointer; }
+        .s-btn.active-s { background: #0055ff !important; color: #fff !important; border-color: #fff; }
+        .s-btn.active-o { background: #444 !important; color: #fff !important; border-color: #bbb; }
 
-        #res { display: none; margin-top: 10px; border: 3px solid #00ff00; background: #050505; padding: 20px; border-radius: 15px; }
-        .dec { font-size: 2.8rem; font-weight: bold; margin-bottom: 5px; }
-        .tier { font-size: 1.2rem; color: #aaa; margin-bottom: 15px; }
+        /* PANEL DE RESULTADOS */
+        #res { display: none; margin-top: 10px; border: 3px solid #00ff00; background: #050505; padding: 20px; border-radius: 15px; box-shadow: 0 0 20px rgba(0,255,0,0.2); }
+        .dec { font-size: 2.5rem; font-weight: bold; margin-bottom: 5px; line-height: 1.1; }
+        .tier { font-size: 1rem; color: #aaa; margin-bottom: 15px; letter-spacing: 1px; }
         .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .stat-card { background: #1a1a1a; padding: 10px; border-radius: 8px; border: 1px solid #333; }
-        .stat-val { font-size: 1.5rem; font-weight: bold; display: block; }
-        .btn-clear { width: 100%; padding: 20px; background: #e74c3c; color: #fff; font-size: 1.5rem; font-weight: bold; border: none; border-radius: 12px; margin-top: 20px; }
+        .stat-card { background: #111; padding: 12px; border-radius: 10px; border: 1px solid #222; }
+        .stat-label { font-size: 0.7rem; color: #777; display: block; margin-bottom: 5px; }
+        .stat-val { font-size: 1.6rem; font-weight: bold; }
+
+        .btn-clear { width: 100%; padding: 22px; background: #e74c3c; color: #fff; font-size: 1.4rem; font-weight: bold; border: none; border-radius: 12px; margin-top: 15px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -41,19 +49,19 @@ html_code = """
 
     <div class="grid" id="g"></div>
     
-    <div class="suit-box" id="sb">
-        <button class="s-btn" onclick="setS(true)">SUITED (s)</button>
-        <button class="s-btn of" onclick="setS(false)">OFFSUIT (o)</button>
+    <div class="suit-main" id="sm">
+        <button class="s-btn" id="btnS" onclick="setS(true)">SUITED (s)</button>
+        <button class="s-btn" id="btnO" onclick="setS(false)">OFFSUIT (o)</button>
     </div>
 
     <div id="res">
         <div id="dec" class="dec"></div>
         <div id="tier" class="tier"></div>
         <div class="stats">
-            <div class="stat-card"><span>EQUITY ITM</span><span class="stat-val" id="itm" style="color:#00ff00"></span></div>
-            <div class="stat-card"><span>RANGO</span><span class="stat-val" id="rnk"></span></div>
+            <div class="stat-card"><span class="stat-label">EQUITY ITM</span><span class="stat-val" id="itm" style="color:#00ff00"></span></div>
+            <div class="stat-card"><span class="stat-label">RANGO #</span><span class="stat-val" id="rnk"></span></div>
         </div>
-        <button class="btn-clear" onclick="reset()">SIGUIENTE MANO</button>
+        <button class="btn-clear" onclick="reset()">NUEVA MANO</button>
     </div>
 
     <script>
@@ -63,14 +71,12 @@ html_code = """
         function init() {
             const g = document.getElementById('g'); g.innerHTML = "";
             cards.forEach(c => {
-                const b = document.createElement('button'); b.innerText = c;
+                const b = document.createElement('button');
+                b.innerText = c; b.className = "c-btn";
                 b.onclick = () => {
                     if(sel.length < 2) {
                         sel.push(c); b.classList.add('active');
-                        if(sel.length === 2) {
-                            if(sel[0] === sel[1]) { same=false; calc(); }
-                            else { document.getElementById('sb').style.display = 'grid'; }
-                        }
+                        checkAutoCalc();
                     }
                 };
                 g.appendChild(b);
@@ -80,52 +86,13 @@ html_code = """
         function setBB(v) { 
             bbs = v; 
             document.querySelectorAll('.bb-btn').forEach(b => b.classList.remove('active'));
-            if(v==10) document.getElementById('bb1').classList.add('active');
-            if(v==30) document.getElementById('bb2').classList.add('active');
-            if(v==50) document.getElementById('bb3').classList.add('active');
+            event.target.classList.add('active');
             if(sel.length==2) calc();
         }
 
-        function setS(v) { same = v; calc(); }
-
-        function reset() {
-            sel = []; same = null;
-            document.getElementById('res').style.display = 'none';
-            document.getElementById('sb').style.display = 'none';
-            init();
-        }
-
-        function calc() {
-            document.getElementById('res').style.display = 'block';
-            document.getElementById('sb').style.display = 'none';
-            const h1 = sel[0], h2 = sel[1];
-            const isP = h1 === h2;
-            const idx1 = cards.indexOf(h1), idx2 = cards.indexOf(h2);
-            
-            let d = document.getElementById('dec'), t = document.getElementById('tier');
-            let i = document.getElementById('itm'), r = document.getElementById('rnk');
-
-            if (isP && idx1 <= 4) { // AA-TT
-                d.innerText = "ALL-IN / RAISE"; d.style.color = "#00ff00";
-                t.innerText = "TIER S: PREMIUM PAIR"; i.innerText = "85%"; r.innerText = "#1";
-            } else if (h1 === 'A' && (idx2 <= 2 || (same && idx2 <= 9))) { // AK, AQ, AJ o Ax suited
-                d.innerText = (bbs < 15) ? "ALL-IN" : "RAISE"; d.style.color = "#00ff00";
-                t.innerText = "TIER A: TOP RANGE"; i.innerText = "65%"; r.innerText = "#2";
-            } else if (idx1 <= 2 && idx2 <= 3 && same) { // KQs, KJs, QJs
-                d.innerText = (bbs < 12) ? "SHOVE" : "OPEN RAISE"; d.style.color = "#ffff00";
-                t.innerText = "TIER B: BROADWAY SUITED"; i.innerText = "55%"; r.innerText = "#3";
-            } else if (isP && idx1 > 4) { // Small pairs
-                d.innerText = (bbs < 20) ? "PUSH/FOLD" : "SET MINING"; d.style.color = "#ffcc00";
-                t.innerText = "TIER C: POCKET PAIR"; i.innerText = "48%"; r.innerText = "#4";
-            } else {
-                d.innerText = "FOLD"; d.style.color = "#ff4444";
-                t.innerText = "TIER F: BASURA"; i.innerText = "18%"; r.innerText = "#10";
-            }
-        }
-        init();
-    </script>
-</body>
-</html>
-"""
-components.html(html_code, height=750)
-
+        function setS(v) { 
+            if(sel[0] === sel[1]) return; // Ignorar si es pareja
+            same = v; 
+            document.getElementById('btnS').className = v ? "s-btn active-s" : "s-btn";
+            document.getElementById('btnO').className = !v ? "s-btn active-o" : "s-btn";
+            if(sel.length == 2)
