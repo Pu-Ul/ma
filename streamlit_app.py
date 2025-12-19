@@ -102,3 +102,60 @@ html_code = """
         function resetApp() {
             sel = []; same = null;
             document.getElementById('res').style.display = 'none';
+            document.getElementById('stog').style.display = 'none';
+            init();
+        }
+
+        function draw(v, red) { return `<div class="card ${red?'red':''}">${v}</div>`; }
+
+        function calc() {
+            const h1 = sel[0], h2 = sel[1];
+            const isP = h1 === h2;
+            document.getElementById('res').style.display = 'block';
+            document.getElementById('stog').style.display = isP ? 'none' : 'flex';
+            
+            const typeDisp = document.getElementById('type-display');
+            typeDisp.innerText = isP ? "PAREJA EN MANO" : (same ? "MANO SUITED (s)" : "MANO OFFSUIT (o)");
+
+            let b = document.getElementById('banner');
+            let ok = isP || h1 === 'A' || (h1 === 'K' && (same || rs.indexOf(h2) < 5));
+            b.innerText = ok ? "RAISE 🔥" : "FOLD 💀";
+            b.style.background = ok ? "#27ae60" : "#c0392b";
+
+            let r1="", r2="", t1="", t2="";
+
+            if(isP) {
+                r1 = draw(h1, true) + draw(h1, false) + draw('X', true);
+                t1 = "SET (TRIO) - 4ta Jerarquía";
+                r2 = draw('J', true) + draw('7', false) + draw('2', true);
+                t2 = "OVERPAIR - 8va Jerarquía";
+            } else if (sel.includes('A') && sel.includes('Q')) {
+                r1 = draw('K', true) + draw('J', false) + draw('T', true);
+                t1 = "ESCALERA - 6ta Jerarquía";
+                r2 = draw('A', false) + draw('Q', true) + draw('5', false);
+                t2 = "TOP PAIR - 9na Jerarquía";
+            } else if (same) {
+                r1 = draw('X', true) + draw('X', true) + draw('X', true);
+                t1 = "COLOR (FLUSH) - 5ta Jerarquía";
+                r2 = draw(h1, false) + draw('J', true) + draw('4', false);
+                t2 = "PROYECTO DE COLOR";
+            } else {
+                r1 = draw(h1, true) + draw(h2, false) + draw('X', true);
+                t1 = "DOBLES PAREJAS - 7ma Jerarquía";
+                r2 = draw(h1, true) + draw('9', false) + draw('4', true);
+                t2 = "TOP PAIR - 9na Jerarquía";
+            }
+
+            document.getElementById('c1').innerHTML = r1;
+            document.getElementById('t1').innerText = t1;
+            document.getElementById('c2').innerHTML = r2;
+            document.getElementById('t2').innerText = t2;
+        }
+
+        init();
+    </script>
+</body>
+</html>
+"""
+
+components.html(html_code, height=1000, scrolling=True)
