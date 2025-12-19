@@ -1,7 +1,7 @@
 import streamlit as st
 import streamlit.components.v1 as components
 
-st.set_page_config(page_title="PauGaR - Radar Posicional", layout="centered")
+st.set_page_config(page_title="PauGaR - Radar Inteligente", layout="centered")
 
 html_code = """
 <!DOCTYPE html>
@@ -11,204 +11,140 @@ html_code = """
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
         body { font-family: 'Arial Black', sans-serif; background: #000; color: #fff; text-align: center; margin: 0; padding: 5px; }
+        .row-label { font-size: 0.7rem; color: #ffcc00; font-weight: bold; display: block; margin: 10px 0 5px 0; text-transform: uppercase; }
         
-        /* SELECTORES SUPERIORES (CIEGAS Y POSICIÓN) */
-        .header-box { background: #111; padding: 8px; border-radius: 10px; margin-bottom: 10px; border: 1px solid #222; }
-        .row-label { font-size: 0.65rem; color: #ffcc00; font-weight: bold; display: block; margin-bottom: 5px; text-transform: uppercase; }
-        .btn-group { display: flex; justify-content: space-around; margin-bottom: 8px; }
-        .mini-btn { flex: 1; margin: 0 2px; font-size: 0.65rem; padding: 10px 0; background: #222; border: 1px solid #444; color: #888; border-radius: 5px; font-weight: bold; }
+        /* BOTONES SUPERIORES */
+        .btn-group { display: flex; justify-content: space-around; gap: 5px; margin-bottom: 10px; }
+        .mini-btn { flex: 1; font-size: 0.7rem; padding: 12px 0; background: #222; border: 1px solid #444; color: #888; border-radius: 8px; font-weight: bold; }
         .mini-btn.active { background: #ffcc00 !important; color: #000 !important; border-color: #fff; }
 
-        /* TECLADO DE CARTAS */
+        /* GRID DE CARTAS */
         .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 10px; }
-        .c-btn { padding: 12px 0; font-size: 1.1rem; background: #1a1a1a; color: #fff; border: 1px solid #333; border-radius: 6px; }
+        .c-btn { padding: 12px 0; font-size: 1.1rem; background: #1a1a1a; color: #fff; border: 1px solid #333; border-radius: 8px; }
         .c-btn.active { background: #00ff00 !important; color: #000 !important; border: 2px solid #fff; }
         
-        /* PALOS */
-        .suit-box { display: flex; gap: 8px; margin-bottom: 10px; }
-        .s-btn { flex: 1; padding: 15px; font-size: 0.9rem; border-radius: 10px; border: 2px solid #333; background: #111; color: #888; }
-        .active-s { background: #0055ff !important; color: #fff !important; }
-        .active-o { background: #444 !important; color: #fff !important; }
+        /* RESULTADO */
+        #res { display: none; padding: 20px; border-radius: 20px; margin-top: 10px; }
+        .dec-txt { font-size: 3.5rem; font-weight: 900; margin: 0; }
 
-        /* RESULTADO SEMÁFORO */
-        #res { display: none; padding: 20px; border-radius: 20px; margin-top: 5px; }
-        .dec-txt { font-size: 3.5rem; font-weight: 900; margin: 0; text-shadow: 2px 2px #000; }
-        
-        /* VISUALIZACIÓN DEL SUEÑO */
-        .dream-area { background: #111; margin-top: 10px; padding: 15px; border-radius: 15px; border: 2px solid #ffcc00; }
-        .board { display: flex; justify-content: center; gap: 8px; margin-top: 5px; }
-        .card-ui { 
-            width: 50px; height: 75px; background: #fff; color: #000; 
-            border-radius: 8px; display: flex; flex-direction: column; 
-            justify-content: center; align-items: center; font-weight: 900; font-size: 1.1rem;
-        }
-        .red { color: #e74c3c; }
+        /* SECCIÓN FLOP */
+        #flop-section { display: none; background: #111; padding: 15px; border-radius: 20px; border: 2px solid #00ff00; margin-top: 15px; }
+        .flop-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+        .f-btn { padding: 10px 0; font-size: 0.9rem; background: #222; border: 1px solid #444; color: #fff; border-radius: 6px; }
+        .f-btn.active { background: #00ff00 !important; color: #000 !important; }
 
-        /* BOTONES DE ACCIÓN POST-FLOP (PRÓXIMAMENTE) */
-        .btn-reset { width: 100%; padding: 25px; background: #fff; color: #000; font-size: 2rem; font-weight: 900; border-radius: 15px; margin-top: 20px; }
-        
-        /* HISTORIAL */
-        .hist-box { margin-top: 25px; text-align: left; background: #0a0a0a; padding: 15px; border-radius: 10px; border: 1px solid #222; }
-        .h-item { font-size: 0.75rem; padding: 5px 0; border-bottom: 1px solid #222; display: flex; justify-content: space-between; }
-        .btn-exp { width: 100%; padding: 12px; background: #27ae60; color: #fff; border: none; border-radius: 8px; font-weight: bold; margin-top: 10px; }
+        /* HISTORIAL CON REGISTRO DE VILLANO */
+        .hist-box { margin-top: 25px; text-align: left; background: #0a0a0a; padding: 15px; border-radius: 12px; border: 1px solid #222; }
+        .h-item { font-size: 0.75rem; padding: 8px 0; border-bottom: 1px solid #222; color: #bbb; }
+        .v-input { background: #222; border: 1px solid #444; color: #ffcc00; padding: 5px; border-radius: 4px; width: 60px; font-weight: bold; }
+
+        .btn-action { width: 100%; padding: 20px; font-size: 1.5rem; font-weight: 900; border-radius: 15px; margin-top: 15px; border: none; }
     </style>
 </head>
 <body>
-    <div class="header-box">
-        <span class="row-label">1. TUS CIEGAS (Stack)</span>
-        <div class="btn-group">
-            <button class="mini-btn" id="bb1" onclick="setBB(10)"> <10 BB </button>
-            <button class="mini-btn active" id="bb2" onclick="setBB(30)"> 10-40 BB </button>
-            <button class="mini-btn" id="bb3" onclick="setBB(50)"> 40+ BB </button>
-        </div>
-        
-        <span class="row-label">2. TU POSICIÓN (Lugar en mesa)</span>
-        <div class="btn-group">
-            <button class="mini-btn" id="p1" onclick="setPos('EARLY')"> EARLY </button>
-            <button class="mini-btn" id="p2" onclick="setPos('MID')"> MID </button>
-            <button class="mini-btn active" id="p3" onclick="setPos('LATE')"> LATE (Btn) </button>
-            <button class="mini-btn" id="p4" onclick="setPos('BLIND')"> CIEGAS </button>
-        </div>
+    <div class="btn-group">
+        <button class="mini-btn active" onclick="setBB(30)">10-40 BB</button>
+        <button class="mini-btn" onclick="setPos('LATE')">LATE POS</button>
     </div>
 
+    <span class="row-label">TUS CARTAS (Mano Inicial)</span>
     <div class="grid" id="g"></div>
-    <div class="suit-box">
-        <button class="s-btn" id="btnS" onclick="setS(true)">SUITED (s)</button>
-        <button class="s-btn" id="btnO" onclick="setS(false)">OFFSUIT (o)</button>
+    <div class="btn-group">
+        <button class="mini-btn" id="btnS" onclick="setS(true)">MISMO PALO</button>
+        <button class="mini-btn" id="btnO" onclick="setS(false)">DISTINTO</button>
     </div>
 
     <div id="res">
         <p id="dec" class="dec-txt"></p>
-        <div class="dream-area">
-            <span style="color:#ffcc00; font-size:0.8rem; font-weight:bold;" id="dRank">EL SUEÑO</span>
-            <div class="board" id="board"></div>
-        </div>
-        <button class="btn-reset" onclick="reset()">SIGUIENTE</button>
+        <button class="btn-action" style="background:#00ff00; color:#000;" onclick="showFlop()">VER FLOP (MESA)</button>
+        <button class="btn-action" style="background:#fff; color:#000;" onclick="reset()">OTRA MANO</button>
+    </div>
+
+    <div id="flop-section">
+        <span class="row-label">CARTAS EN MESA (FLOP)</span>
+        <div class="flop-grid" id="fg"></div>
+        <div id="analysis" style="margin-top:10px; font-size:0.9rem; color:#ffcc00;"></div>
     </div>
 
     <div class="hist-box">
-        <span style="color:#ffcc00; font-size:0.8rem;">REPORTE DE SESIÓN PauGaR</span>
-        <div id="hList" style="margin-top:10px;"></div>
-        <button onclick="exportH()" class="btn-exp">📤 EXPORTAR REPORTE</button>
+        <span style="color:#ffcc00; font-size:0.8rem; display:block; margin-bottom:10px;">HISTORIAL Y REGISTRO DE VILLANOS</span>
+        <div id="hList"></div>
+        <button onclick="exportH()" class="mini-btn" style="width:100%; margin-top:10px; background:#27ae60; color:#fff;">EXPORTAR REPORTE</button>
     </div>
 
     <script>
         const cards = ['A','K','Q','J','10','9','8','7','6','5','4','3','2'];
-        let sel = []; let same = null; let bbs = 30; let pos = 'LATE';
+        let sel = []; let same = null; let flopSel = [];
 
         function init() {
             const g = document.getElementById('g'); g.innerHTML = "";
             cards.forEach(c => {
-                const b = document.createElement('button');
-                b.innerText = c; b.className = "c-btn";
-                b.onclick = () => {
-                    if(sel.length < 2) {
-                        sel.push(c); b.classList.add('active');
-                        if(sel.length === 2) {
-                            if(sel[0] === sel[1]) { same = false; calc(); }
-                            else if(same !== null) calc();
-                        }
-                    }
-                };
+                const b = document.createElement('button'); b.innerText = c; b.className = "c-btn";
+                b.onclick = () => { if(sel.length < 2) { sel.push(c); b.classList.add('active'); if(sel.length==2 && same!==null) calc(); } };
                 g.appendChild(b);
+            });
+            const fg = document.getElementById('fg'); fg.innerHTML = "";
+            cards.forEach(c => {
+                const b = document.createElement('button'); b.innerText = c; b.className = "f-btn";
+                b.onclick = () => { if(flopSel.length < 3) { flopSel.push(c); b.classList.add('active'); if(flopSel.length==3) anaFlop(); } };
+                fg.appendChild(b);
             });
             updateH();
         }
 
-        function setBB(v) { 
-            bbs = v; 
-            document.querySelectorAll('.mini-btn').forEach(b => { if(b.id.startsWith('bb')) b.classList.remove('active'); });
-            event.target.classList.add('active');
-        }
-
-        function setPos(v) {
-            pos = v;
-            document.querySelectorAll('.mini-btn').forEach(b => { if(b.id.startsWith('p')) b.classList.remove('active'); });
-            event.target.classList.add('active');
-        }
-
-        function setS(v) { 
-            same = v; 
-            document.getElementById('btnS').classList.toggle('active-s', v);
-            document.getElementById('btnO').classList.toggle('active-o', !v);
-            if(sel.length == 2) calc();
-        }
-
-        function draw(v, s) {
-            const isR = (s === '♥' || s === '♦');
-            return `<div class="card-ui ${isR ? 'red' : ''}"><span>${v}</span><span>${s}</span></div>`;
-        }
+        function setS(v) { same = v; if(sel.length == 2) calc(); }
 
         function calc() {
-            const h1 = sel[0], h2 = sel[1], idx1 = cards.indexOf(h1), idx2 = cards.indexOf(h2);
-            const isP = h1 === h2;
-            const res = document.getElementById('res');
-            res.style.display = 'block';
+            const h1 = sel[0], h2 = sel[1];
+            const isGood = (h1==='A' || (h1==='K' && same) || h1===h2);
+            const r = document.getElementById('res'); r.style.display = 'block';
+            const d = document.getElementById('dec');
+            d.innerText = isGood ? "PUSH" : "FOLD";
+            r.style.backgroundColor = isGood ? "#27ae60" : "#c0392b";
+            saveH(sel.join("")+(same?'s':'o'), d.innerText);
+        }
 
-            // DECISIÓN BASADA EN POSICIÓN Y STACK
-            let action = "FOLD";
-            let score = 0;
-            if (isP) score += (13 - idx1) * 2;
-            if (h1 === 'A' || h1 === 'K') score += 15;
-            if (same) score += 5;
-            if (pos === 'LATE') score += 10;
-            if (pos === 'EARLY') score -= 10;
+        function showFlop() { document.getElementById('flop-section').style.display = 'block'; }
 
-            if (score > 15 || (bbs < 15 && score > 5)) {
-                action = (bbs < 15) ? "PUSH" : "RAISE";
-                res.style.backgroundColor = "#27ae60";
-            } else {
-                action = "FOLD";
-                res.style.backgroundColor = "#c0392b";
-            }
-
-            document.getElementById('dec').innerText = action;
-
-            // JERARQUÍA VISUAL
-            const board = document.getElementById('board');
-            const dRank = document.getElementById('dRank');
-            if (isP) {
-                dRank.innerText = "SUEÑO: FULL HOUSE / SET";
-                board.innerHTML = draw(h1, '♠') + draw(h1, '♦') + draw('K', '♥');
-            } else if (same) {
-                dRank.innerText = "SUEÑO: FLUSH (COLOR)";
-                board.innerHTML = draw('10', '♥') + draw('7', '♥') + draw('2', '♥');
-            } else {
-                dRank.innerText = "SUEÑO: STRAIGHT (ESCALERA)";
-                board.innerHTML = draw('Q', '♦') + draw('J', '♣') + draw('10', '♥');
-            }
-
-            saveH(sel.join("")+(same?'s':'o'), action);
+        function anaFlop() {
+            const ana = document.getElementById('analysis');
+            const paired = new Set(flopSel).size !== 3;
+            ana.innerHTML = paired ? "⚠️ PELIGRO: MESA DOBLADA (Posible Full House)" : "✅ MESA LIMPIA";
         }
 
         function saveH(m, a) {
             let h = JSON.parse(localStorage.getItem('ph')) || [];
-            h.unshift({m, a, t: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})});
-            if(h.length > 20) h.pop();
+            h.unshift({m, a, v: '', t: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})});
+            if(h.length > 10) h.pop();
             localStorage.setItem('ph', JSON.stringify(h));
             updateH();
         }
 
         function updateH() {
             let h = JSON.parse(localStorage.getItem('ph')) || [];
-            document.getElementById('hList').innerHTML = h.map(x => `
+            document.getElementById('hList').innerHTML = h.map((x, i) => `
                 <div class="h-item">
-                    <span>${x.t} - <b>${x.m}</b></span>
-                    <span style="color:${x.a=='FOLD'?'#ff4444':'#00ff00'}">${x.a}</span>
+                    ${x.t} | MIA: <b>${x.m}</b> | ACCIÓN: <b>${x.a}</b> | 
+                    GANÓ CON: <input class="v-input" placeholder="ej. KK" onchange="updateV(${i}, this.value)" value="${x.v}">
                 </div>`).join('');
+        }
+
+        function updateV(i, val) {
+            let h = JSON.parse(localStorage.getItem('ph'));
+            h[i].v = val.toUpperCase();
+            localStorage.setItem('ph', JSON.stringify(h));
         }
 
         function exportH() {
             let h = JSON.parse(localStorage.getItem('ph')) || [];
-            let txt = "REPORTE PAUGAR:\\n" + h.map(x => `${x.t} ${x.m} -> ${x.a}`).join("\\n");
+            let txt = h.map(x => `${x.t} Mano:${x.m} Yo:${x.a} Villano:${x.v}`).join("\\n");
             navigator.clipboard.writeText(txt).then(() => alert("Copiado"));
         }
 
         function reset() {
-            sel = []; same = null;
+            sel = []; same = null; flopSel = [];
             document.getElementById('res').style.display = 'none';
-            document.getElementById('btnS').classList.remove('active-s');
-            document.getElementById('btnO').classList.remove('active-o');
+            document.getElementById('flop-section').style.display = 'none';
             init();
         }
         init();
@@ -216,4 +152,4 @@ html_code = """
 </body>
 </html>
 """
-components.html(html_code, height=1100, scrolling=True)
+components.html(html_code, height=1200, scrolling=True)
