@@ -1,9 +1,8 @@
 import streamlit as st
 import streamlit.components.v1 as components
 
-st.set_page_config(page_title="PauGaR - Radar Total Auditado", layout="centered")
+st.set_page_config(page_title="PauGaR - Radar Profesional", layout="centered")
 
-# Lógica de Python integrada en el componente visual para máxima velocidad
 html_code = """
 <!DOCTYPE html>
 <html>
@@ -12,141 +11,119 @@ html_code = """
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
         body { font-family: 'Arial Black', sans-serif; background: #000; color: #fff; text-align: center; margin: 0; padding: 5px; }
-        .label { font-size: 0.65rem; color: #ffcc00; font-weight: bold; display: block; margin: 8px 0; text-transform: uppercase; }
+        .label { font-size: 0.7rem; color: #ffcc00; font-weight: bold; display: block; margin: 10px 0; text-transform: uppercase; }
         
-        /* MATRIZ DE 52 CARTAS - DISEÑO HORIZONTAL (13 COL) */
-        .poker-grid { 
-            display: grid; 
-            grid-template-columns: repeat(13, 1fr); 
-            gap: 2px; 
-            width: 100%; 
-            margin: 0 auto;
-        }
+        /* PASO 1: INTERFAZ SIMPLE (CANDADO) */
+        .grid-p1 { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-bottom: 10px; }
+        .btn-p1 { padding: 15px 0; font-size: 1.2rem; background: #1a1a1a; color: #fff; border: 1px solid #444; border-radius: 8px; }
+        .btn-p1.active { background: #00ff00 !important; color: #000 !important; border: 2px solid #fff; }
+        .suit-box { display: flex; gap: 8px; margin-bottom: 15px; }
+        .s-btn { flex: 1; padding: 18px; font-size: 1rem; border-radius: 12px; border: 2px solid #333; background: #111; color: #888; }
+        .active-s { background: #0055ff !important; color: #fff !important; }
+        .active-o { background: #444 !important; color: #fff !important; }
+
+        /* RESULTADO SEMÁFORO */
+        #res-p1 { display: none; padding: 20px; border-radius: 20px; margin-top: 10px; border: 4px solid #fff; }
+        .dec-txt { font-size: 3.5rem; font-weight: 900; margin: 0; }
         
-        .c-btn { 
-            padding: 10px 0; font-size: 0.6rem; background: #1a1a1a; color: #fff; 
-            border: 1px solid #333; border-radius: 4px; font-weight: bold; cursor: pointer;
-        }
-        .c-btn.active { background: #fff !important; color: #000 !important; border: 1px solid #00ff00; }
-        
-        /* PINTAS VISUALES */
+        /* PASO 2: MATRIZ 52 (EVOLUCIÓN POST-FLOP) */
+        #paso2 { display: none; margin-top: 25px; border-top: 2px dashed #444; padding-top: 15px; }
+        .poker-grid { display: grid; grid-template-columns: repeat(13, 1fr); gap: 2px; margin-bottom: 10px; }
+        .c-btn { padding: 10px 0; font-size: 0.6rem; background: #1a1a1a; color: #fff; border: 1px solid #333; border-radius: 4px; }
+        .c-btn.active { background: #fff !important; color: #000 !important; }
         .p-s { border-bottom: 3px solid #555; }
         .p-h { border-bottom: 3px solid #ff4444; color: #ff8888; }
         .p-d { border-bottom: 3px solid #ff4444; color: #ff8888; }
         .p-t { border-bottom: 3px solid #00ff00; color: #88ff88; }
 
-        /* RESULTADOS Y SEMÁFORO */
-        #box-res { display: none; padding: 15px; border-radius: 15px; margin-top: 10px; border: 3px solid #fff; }
-        .dec-txt { font-size: 3rem; font-weight: 900; margin: 0; text-shadow: 2px 2px #000; }
+        .flop-view { display: flex; justify-content: center; gap: 8px; margin: 15px 0; }
+        .card-ui { width: 50px; height: 75px; background: #fff; color: #000; border-radius: 8px; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 1.1rem; font-weight: 900; }
         
-        /* MÓDULO POST-FLOP */
-        #box-post { display: none; margin-top: 20px; background: #111; padding: 12px; border-radius: 15px; border: 1px solid #00ff00; }
-        .flop-display { display: flex; justify-content: center; gap: 6px; margin: 10px 0; }
-        .card-ui { width: 45px; height: 65px; background: #fff; color: #000; border-radius: 6px; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 1rem; font-weight: bold; }
-        
-        .ana-box { background: #000; padding: 10px; border-radius: 8px; font-size: 0.8rem; text-align: left; margin-top: 10px; border-left: 4px solid #ffcc00; line-height: 1.3; }
-        
-        /* HISTORIAL */
-        .hist-box { margin-top: 25px; text-align: left; background: #0a0a0a; padding: 10px; border-radius: 12px; border: 1px solid #222; }
-        .v-input { background: #222; border: 1px solid #444; color: #ffcc00; padding: 5px; border-radius: 5px; width: 80px; font-weight: bold; font-size: 0.7rem; }
-
-        .btn-reset { width: 100%; padding: 22px; background: #fff; color: #000; font-size: 1.6rem; font-weight: 900; border-radius: 15px; margin-top: 20px; border: none; }
+        .btn-reset { width: 100%; padding: 25px; background: #fff; color: #000; font-size: 2rem; font-weight: 900; border-radius: 15px; margin-top: 25px; }
+        .hist-box { margin-top: 20px; text-align: left; background: #0a0a0a; padding: 10px; border-radius: 10px; font-size: 0.75rem; }
+        .v-input { background: #222; border: 1px solid #444; color: #ffcc00; padding: 5px; width: 70px; border-radius: 5px; }
     </style>
 </head>
 <body>
 
-    <span class="label">Paso 1: Matriz de 52 (Selecciona tus 2 cartas)</span>
-    <div class="poker-grid" id="main-grid"></div>
+    <span class="label">Paso 1: Tu Mano (Simple)</span>
+    <div class="grid-p1" id="g1"></div>
+    <div class="suit-box">
+        <button class="s-btn" id="btnS" onclick="setS(true)">SUITED (s)</button>
+        <button class="s-btn" id="btnO" onclick="setS(false)">OFFSUIT (o)</button>
+    </div>
 
-    <div id="box-res">
-        <p id="dec-val" class="dec-txt"></p>
+    <div id="res-p1">
+        <p id="dec" class="dec-txt"></p>
         
-        <div id="box-post">
-            <span class="label" style="color:#00ff00">Paso 2: Alimentar Flop (Selecciona 3 más arriba)</span>
-            <div id="flop-view" class="flop-display"></div>
-            <div id="ana-res" class="ana-box" style="display:none;"></div>
+        <div id="paso2">
+            <span class="label" style="color:#00ff00">Paso 2: Alimentar Flop (Matriz 52)</span>
+            <div class="poker-grid" id="g52"></div>
+            <div class="flop-view" id="flop-display"></div>
+            <div id="ana" style="background:#111; padding:10px; border-radius:10px; font-size:0.8rem; text-align:left; border-left:4px solid #ffcc00;"></div>
         </div>
 
         <div class="hist-box">
-            <span style="color:#ffcc00; font-size:0.75rem;">REPORTE: YO | ACCIÓN | VILLANO GANÓ CON:</span>
-            <div id="hList" style="margin-top:8px; font-size:0.8rem;"></div>
+            <span style="color:#666">REPORTE: YO | ACCIÓN | VILLANO:</span>
+            <div id="hList"></div>
         </div>
 
-        <button class="btn-reset" onclick="window.location.reload()">SIGUIENTE MANO</button>
+        <button class="btn-reset" onclick="window.location.reload()">NUEVA MANO</button>
     </div>
 
     <script>
         const ranks = ['A','K','Q','J','10','9','8','7','6','5','4','3','2'];
-        const suits = [{s:'♠', c:'p-s'}, {s:'♥', c:'p-h'}, {s:'♦', c:'p-d'}, {s:'♣', c:'p-t'}];
-        let myH = []; let flopH = [];
+        const suits = [{s:'♠',c:'p-s'},{s:'♥',c:'p-h'},{s:'♦',c:'p-d'},{s:'♣',c:'p-t'}];
+        let myH = []; let same = null; let flopH = [];
 
-        // Generar Matriz
-        const grid = document.getElementById('main-grid');
-        suits.forEach(suit => {
-            ranks.forEach(rank => {
-                const b = document.createElement('button');
-                b.innerText = rank + suit.s;
-                b.className = `c-btn ${suit.c}`;
-                b.onclick = () => handleInput(rank, suit.s, b);
-                grid.appendChild(b);
+        function init() {
+            const g1 = document.getElementById('g1');
+            ranks.forEach(r => {
+                const b = document.createElement('button'); b.innerText = r; b.className = "btn-p1";
+                b.onclick = () => { if(myH.length < 2) { myH.push(r); b.classList.add('active'); if(myH.length==2 && same!==null) calc(); } };
+                g1.appendChild(b);
             });
-        });
-
-        function handleInput(r, s, btn) {
-            if (myH.length < 2 && !btn.classList.contains('active')) {
-                myH.push({r, s}); btn.classList.add('active');
-                if (myH.length === 2) procesarPre();
-            } else if (myH.length === 2 && flopH.length < 3 && !btn.classList.contains('active')) {
-                flopH.push({r, s}); btn.classList.add('active');
-                renderFlop();
-            }
+            const g52 = document.getElementById('g52');
+            suits.forEach(s => {
+                ranks.forEach(r => {
+                    const b = document.createElement('button'); b.innerText = r+s.s; b.className = `c-btn ${s.c}`;
+                    b.onclick = () => { if(flopH.length < 3 && !b.classList.contains('active')) { flopH.push({r,s:s.s}); b.classList.add('active'); renderFlop(); } };
+                    g52.appendChild(b);
+                });
+            });
         }
 
-        function procesarPre() {
-            const box = document.getElementById('box-res');
-            const dec = document.getElementById('dec-val');
-            box.style.display = 'block';
-            
-            const r1 = myH[0].r, r2 = myH[1].r;
-            const suited = myH[0].s === myH[1].s;
-            
-            // LÓGICA DE DECISIÓN (IF)
-            let ok = (r1 === r2 || r1 === 'A' || r2 === 'A' || ((r1 === 'K' || r2 === 'K') && suited));
-            
+        function setS(v) { same = v; if(myH.length == 2) calc(); }
+
+        function calc() {
+            const res = document.getElementById('res-p1'); const dec = document.getElementById('dec');
+            res.style.display = 'block';
+            const ok = (myH[0] === myH[1] || myH[0] === 'A' || (myH[0] === 'K' && same));
             dec.innerText = ok ? "RAISE" : "FOLD";
-            box.style.backgroundColor = ok ? "#1b5e20" : "#b71c1c";
-            
-            if (ok) document.getElementById('box-post').style.display = 'block';
-            
-            addHist(myH[0].r + myH[1].r + (suited?'s':'o'), dec.innerText);
+            res.style.backgroundColor = ok ? "#1b5e20" : "#b71c1c";
+            if(ok) document.getElementById('paso2').style.display = 'block';
+            addHist(myH.join("")+(same?'s':'o'), dec.innerText);
         }
 
         function renderFlop() {
-            const view = document.getElementById('flop-view');
-            view.innerHTML = flopH.map(c => `
-                <div class="card-ui" style="color:${(c.s=='♥'||c.s=='♦')?'red':'black'}">
-                    <span>${c.r}</span><span>${c.s}</span>
-                </div>`).join('');
-            
-            if (flopH.length === 3) {
-                const ana = document.getElementById('ana-res');
-                ana.style.display = 'block';
-                const connect = flopH.some(f => f.r === myH[0].r || f.r === myH[1].r);
-                const mesaD = new Set(flopH.map(f => f.r)).size < 3;
-                const mesaS = flopH.every(f => f.s === flopH[0].s);
-
-                ana.innerHTML = `<b>CONEXIÓN:</b> ${connect ? "✅ IMPACTO" : "❌ FALLO"}<br>` +
-                                `<b>PELIGRO:</b> ${mesaD ? "⚠️ MESA DOBLADA (FULL)" : (mesaS ? "⚠️ COLOR EN MESA" : "✅ MESA SECA")}`;
+            const view = document.getElementById('flop-display');
+            view.innerHTML = flopH.map(c => `<div class="card-ui" style="color:${(c.s=='♥'||c.s=='♦')?'red':'black'}"><span>${c.r}</span><span>${c.s}</span></div>`).join('');
+            if(flopH.length === 3) {
+                const ana = document.getElementById('ana');
+                const conn = flopH.some(f => myH.includes(f.r));
+                const pair = new Set(flopH.map(f => f.r)).size < 3;
+                ana.innerHTML = `<b>ESTADO:</b> ${conn ? "✅ CONECTADO" : "❌ FALLO"}<br><b>PELIGRO:</b> ${pair ? "⚠️ MESA DOBLADA" : "✅ MESA LIMPIA"}`;
             }
         }
 
-        function addHist(mano, accion) {
+        function addHist(m, a) {
             const h = document.getElementById('hList');
-            h.innerHTML = `<div style="margin-bottom:5px;">${mano} | <b>${accion}</b> | <input class="v-input" placeholder="p.ej. Q♠Q♦"></div>` + h.innerHTML;
+            h.innerHTML = `<div>${m} | <b>${a}</b> | <input class="v-input" placeholder="ej: KK"></div>` + h.innerHTML;
         }
+
+        init();
     </script>
 </body>
 </html>
 """
-
-components.html(html_code, height=1050, scrolling=True)
+components.html(html_code, height=1200, scrolling=True)
