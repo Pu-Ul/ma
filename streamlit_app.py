@@ -1,10 +1,9 @@
 import streamlit as st
 import streamlit.components.v1 as components
 
-# Configuración de la página para móvil
-st.set_page_config(page_title="PauGaR - VISIÓN GIGANTE", layout="centered")
+# Configuración para que se vea perfecto en el celular
+st.set_page_config(page_title="PauGaR - SISTEMA FINAL", layout="centered")
 
-# CÓDIGO ÚNICO (HTML + CSS + JS)
 html_code = """
 <!DOCTYPE html>
 <html>
@@ -21,16 +20,11 @@ html_code = """
             padding: 5px; 
         }
 
-        /* TÍTULO PAUGAR */
-        .footer-name { font-size: 1.2rem; color: #444; margin-top: 15px; }
-        .footer-name b { color: #00ff00; }
-
-        /* BOTONES DE CARTAS - TAMAÑO GIGANTE */
+        /* TABLERO DE CARTAS GIGANTE */
         .grid { 
             display: grid; 
             grid-template-columns: repeat(4, 1fr); 
             gap: 10px; 
-            max-width: 100%; 
             margin: 10px auto; 
         }
         .c-btn { 
@@ -38,9 +32,8 @@ html_code = """
             font-size: 2.5rem; 
             background: #1a1a1a; 
             color: #fff; 
-            border: 3px solid #333; 
+            border: 3px solid #444; 
             border-radius: 15px; 
-            font-weight: bold; 
         }
         .c-btn.active { 
             background: #00ff00 !important; 
@@ -48,7 +41,7 @@ html_code = """
             border: 5px solid #fff; 
         }
         
-        /* BOTONES DE PALO - VISIBLES */
+        /* BOTONES DE PALO GIGANTES */
         .suit-box { 
             display: flex; 
             gap: 15px; 
@@ -56,58 +49,66 @@ html_code = """
         }
         .s-btn { 
             flex: 1; 
-            padding: 35px 10px; 
-            font-size: 1.8rem; 
+            padding: 30px 10px; 
+            font-size: 1.6rem; 
             font-weight: 900; 
             border-radius: 20px; 
             border: 4px solid #333; 
             background: #1a1a1a; 
             color: #fff; 
         }
-        .active-s { background: #0055ff !important; border-color: #fff !important; box-shadow: 0 0 20px #0055ff; }
+        .active-s { background: #0055ff !important; border-color: #fff !important; }
         .active-o { background: #555 !important; border-color: #fff !important; }
 
-        /* RESULTADO TIPO SEMÁFORO (GIGANTE) */
+        /* RESULTADO (SEMÁFORO) */
         #res { 
             display: none; 
             margin-top: 20px; 
-            padding: 50px 10px; 
-            border-radius: 35px; 
+            padding: 40px 10px; 
+            border-radius: 30px; 
         }
         .dec-txt { 
-            font-size: 6rem; 
+            font-size: 5rem; 
             font-weight: 900; 
             margin: 0; 
-            letter-spacing: -2px;
-            text-shadow: 2px 2px #000;
         }
         
-        /* EL SUEÑO - TEXTO GRANDE */
-        .dream-box { 
-            margin-top: 25px; 
-            background: rgba(0,0,0,0.6); 
+        /* CUADRO DE APRENDIZAJE (EL SUEÑO) */
+        .edu-box { 
+            margin-top: 20px; 
+            background: rgba(255,255,255,0.1); 
             padding: 20px; 
             border-radius: 20px; 
-            border: 3px dashed #ffcc00;
+            border-left: 8px solid #ffcc00;
+            text-align: left;
         }
-        .dream-val { 
-            font-size: 2.5rem; 
+        .edu-title { 
             color: #ffcc00; 
+            font-size: 1.5rem; 
             font-weight: bold; 
+            display: block; 
+            margin-bottom: 8px; 
+        }
+        .edu-text { 
+            font-size: 1.2rem; 
+            color: #fff; 
+            font-family: sans-serif;
+            line-height: 1.4;
         }
 
         .btn-reset { 
             width: 100%; 
-            padding: 35px; 
+            padding: 30px; 
             background: #fff; 
             color: #000; 
-            font-size: 2.5rem; 
+            font-size: 2.2rem; 
             font-weight: 900; 
-            border: none; 
             border-radius: 25px; 
             margin-top: 30px; 
-            box-shadow: 0 5px 15px rgba(255,255,255,0.3);
         }
+
+        .footer { font-size: 1.2rem; color: #444; margin: 20px 0; }
+        .footer b { color: #00ff00; }
     </style>
 </head>
 <body>
@@ -116,21 +117,21 @@ html_code = """
     
     <div class="suit-box">
         <button class="s-btn" id="btnS" onclick="setS(true)">MISMO<br>PALO</button>
-        <button class="s-btn" id="btnO" onclick="setS(false)">PALO<br>DISTINTO</button>
+        <button class="s-btn" id="btnO" onclick="setS(false)">DISTINTO<br>PALO</button>
     </div>
 
     <div id="res">
         <p id="dec" class="dec-txt"></p>
         
-        <div class="dream-box">
-            <span style="font-size: 1.5rem; color: #fff; display:block; margin-bottom:10px;">EL SUEÑO:</span>
-            <span id="dream" class="dream-val"></span>
+        <div class="edu-box">
+            <span id="eduT" class="edu-title"></span>
+            <span id="eduX" class="edu-text"></span>
         </div>
         
         <button class="btn-reset" onclick="reset()">OTRA MANO</button>
     </div>
 
-    <div class="footer-name">Developed by <b>PauGaR</b></div>
+    <div class="footer">Developed by <b>PauGaR</b></div>
 
     <script>
         const cards = ['A','K','Q','J','10','9','8','7','6','5','4','3','2'];
@@ -169,30 +170,36 @@ html_code = """
             
             const r = document.getElementById('res');
             const d = document.getElementById('dec');
-            const dr = document.getElementById('dream');
+            const et = document.getElementById('eduT');
+            const ex = document.getElementById('eduX');
             
             r.style.display = 'block';
 
-            // --- LÓGICA DE DECISIÓN ---
+            // DECISIÓN SEMÁFORO
             if (isP && idx1 <= 7) { 
-                d.innerText = "ENTRA"; 
-                r.style.backgroundColor = "#27ae60"; // VERDE
+                d.innerText = "ENTRA"; r.style.backgroundColor = "#27ae60"; 
             } else if (h1 === 'A' || (h1 === 'K' && (same || idx2 <= 3))) {
-                d.innerText = "ENTRA"; 
-                r.style.backgroundColor = "#27ae60"; // VERDE
+                d.innerText = "ENTRA"; r.style.backgroundColor = "#27ae60";
             } else if (same && dist <= 2 && idx1 <= 8) {
-                d.innerText = "ENTRA"; 
-                r.style.backgroundColor = "#27ae60"; // VERDE
+                d.innerText = "ENTRA"; r.style.backgroundColor = "#27ae60";
             } else {
-                d.innerText = "FUERA"; 
-                r.style.backgroundColor = "#c0392b"; // ROJO
+                d.innerText = "FUERA"; r.style.backgroundColor = "#c0392b";
             }
 
-            // --- LÓGICA DEL SUEÑO ---
-            if (isP) dr.innerText = "TRÍO / PÓKER";
-            else if (same) dr.innerText = "COLOR 🎨";
-            else if (dist <= 4) dr.innerText = "ESCALERA 📏";
-            else dr.innerText = "PAR ALTO 2️⃣";
+            // EDUCACIÓN Y CULTURA DE POKER
+            if (isP) {
+                et.innerText = "SUEÑO: FULL HOUSE";
+                ex.innerText = "Tienes una pareja inicial. Buscas un TRÍO (3 iguales) para armar un Full House (un trío y una pareja). ¡Es una mano ganadora!";
+            } else if (same) {
+                et.innerText = "SUEÑO: COLOR (FLUSH)";
+                ex.innerText = "Tus cartas son del mismo palo. Buscas que salgan 3 más en la mesa para completar 5 del mismo palo.";
+            } else if (dist <= 4) {
+                et.innerText = "SUEÑO: ESCALERA";
+                ex.innerText = "Tus cartas están cerca en número. Buscas completar 5 seguidas (ej: 7-8-9-10-J).";
+            } else {
+                et.innerText = "SUEÑO: PAREJA ALTA";
+                ex.innerText = "Tus cartas están lejos. Solo buscas que salga una igual en la mesa para tener la pareja más fuerte.";
+            }
         }
 
         function reset() {
@@ -207,6 +214,4 @@ html_code = """
 </body>
 </html>
 """
-
-# Renderizado final en la App
 components.html(html_code, height=1200, scrolling=True)
