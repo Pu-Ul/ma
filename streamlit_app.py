@@ -1,171 +1,121 @@
 import streamlit as st
-import streamlit.components.v1 as components
 
-st.set_page_config(page_title="PauGaR - Radar Alta Velocidad PRO", layout="centered")
+# Configuración de la interfaz
+st.set_page_config(page_title="PauGaR - Radar Inteligente", layout="centered")
 
-html_code = """
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+# --- ESTILOS DE INTERFAZ ---
+st.markdown("""
     <style>
-        body { font-family: 'Arial Black', sans-serif; background: #000; color: #fff; text-align: center; margin: 0; padding: 5px; }
-        .row-label { font-size: 0.65rem; color: #ffcc00; font-weight: bold; display: block; margin: 5px 0; text-transform: uppercase; }
-        
-        .poker-grid { display: grid; grid-template-columns: repeat(13, 1fr); gap: 2px; margin-bottom: 5px; }
-        .card-btn { padding: 8px 0; font-size: 0.7rem; background: #1a1a1a; color: #fff; border: 1px solid #333; border-radius: 4px; font-weight: bold; cursor: pointer; }
-        .card-btn.picas { border-bottom: 3px solid #555; }
-        .card-btn.coraz { border-bottom: 3px solid #ff4444; color: #ff8888; }
-        .card-btn.diam { border-bottom: 3px solid #ff4444; color: #ff8888; }
-        .card-btn.trebol { border-bottom: 3px solid #00ff00; color: #88ff88; }
-        .card-btn.active { background: #fff !important; color: #000 !important; border: 1px solid #00ff00 !important; }
-
-        #res { display: none; padding: 10px; border-radius: 10px; margin: 10px 0; border: 2px solid #fff; }
-        .dec-txt { font-size: 1.8rem; font-weight: 900; margin: 0; }
-        
-        #flop-area { display: none; background: #111; padding: 10px; border-radius: 10px; border: 1px solid #00ff00; }
-        .flop-display { display: flex; justify-content: center; gap: 5px; margin: 5px 0; }
-        .card-mini { width: 35px; height: 50px; background: #fff; color: #000; border-radius: 4px; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 0.8rem; font-weight: bold; }
-
-        .analysis-box { background: #000; padding: 8px; border-radius: 8px; border-left: 4px solid #ffcc00; margin-top: 8px; text-align: left; }
-        .ana-text { font-size: 0.8rem; color: #fff; line-height: 1.2; }
-        .danger-text { color: #ff4444; font-weight: bold; }
-
-        .btn-reset { width: 100%; padding: 15px; background: #fff; color: #000; font-size: 1.2rem; font-weight: 900; border-radius: 8px; margin-top: 10px; border: none; }
+    .stButton>button { width: 100%; border-radius: 8px; font-weight: bold; height: 3em; }
+    .main-title { color: #ffcc00; text-align: center; font-size: 2rem; font-weight: 900; margin-bottom: 20px; }
+    .decision-box { padding: 25px; border-radius: 15px; text-align: center; font-size: 2.5rem; font-weight: 900; margin: 15px 0; border: 4px solid white; }
+    .info-text { font-size: 0.9rem; color: #ffcc00; font-weight: bold; text-align: center; }
+    .card-display { font-size: 1.5rem; font-weight: bold; text-align: center; padding: 10px; background: #222; border-radius: 10px; margin: 10px 0; }
     </style>
-</head>
-<body>
-    <span class="row-label">1. TUS 2 CARTAS (Toca 2)</span>
-    <div id="grid-me" class="poker-grid"></div>
+""", unsafe_allow_html=True)
 
-    <div id="res">
-        <p id="dec" class="dec-txt"></p>
+st.markdown('<div class="main-title">PAUGAR POKER RADAR</div>', unsafe_allow_html=True)
+
+# --- INICIALIZACIÓN DE VARIABLES DE ESTADO (MEMORIA) ---
+if 'paso' not in st.session_state:
+    st.session_state.paso = 1
+    st.session_state.mano = []
+    st.session_state.suited = None
+    st.session_state.flop = []
+
+# --- PASO 1: DECISIÓN PRE-FLOP (CANDADO) ---
+if st.session_state.paso == 1:
+    st.markdown('<p class="info-text">PASO 1: ELIGE TUS 2 CARTAS</p>', unsafe_allow_html=True)
+    
+    valores = ['A','K','Q','J','10','9','8','7','6','5','4','3','2']
+    cols = st.columns(7)
+    for i, v in enumerate(valores):
+        if cols[i % 7].button(v, key=f"p1_{v}"):
+            if len(st.session_state.mano) < 2:
+                st.session_state.mano.append(v)
+
+    if len(st.session_state.mano) > 0:
+        st.markdown(f'<div class="card-display">Tus cartas: {" - ".join(st.session_state.mano)}</div>', unsafe_allow_html=True)
+
+    st.markdown('<p class="info-text">¿SON DEL MISMO PALO?</p>', unsafe_allow_html=True)
+    col_s1, col_s2 = st.columns(2)
+    if col_s1.button("SÍ (Suited)", key="btn_s"): st.session_state.suited = True
+    if col_s2.button("NO (Offsuit)", key="btn_o"): st.session_state.suited = False
+
+    # Lógica de decisión con IF
+    if len(st.session_state.mano) == 2 and st.session_state.suited is not None:
+        c1 = st.session_state.mano[0]
+        c2 = st.session_state.mano[1]
+        es_suited = st.session_state.suited
         
-        <div id="flop-area">
-            <span class="row-label" style="color:#00ff00">2. EL FLOP (Toca 3 en la matriz)</span>
-            <div id="flop-view" class="flop-display"></div>
-            
-            <div id="analysis-container" class="analysis-box" style="display:none;">
-                <p id="ana-flop" class="ana-text"></p>
-                <p id="danger-flop" class="ana-text danger-text"></p>
-            </div>
-        </div>
+        # EL CANDADO: Lógica de entrada al juego
+        # 1. Parejas (Cualquier par es Raise)
+        # 2. Si tienes un AS
+        # 3. Si tienes una K y es Suited
+        if c1 == c2 or c1 == 'A' or c2 == 'A' or ((c1 == 'K' or c2 == 'K') and es_suited):
+            st.markdown('<div class="decision-box" style="background-color: #27ae60;">RAISE</div>', unsafe_allow_html=True)
+            if st.button("VER EL FLOP ➡️"):
+                st.session_state.paso = 2
+                st.rerun()
+        else:
+            st.markdown('<div class="decision-box" style="background-color: #c0392b;">FOLD</div>', unsafe_allow_html=True)
+            if st.button("🔄 OTRA MANO"):
+                st.session_state.clear()
+                st.rerun()
+
+# --- PASO 2: POST-FLOP (ALIMENTADOR 52 CARTAS) ---
+elif st.session_state.paso == 2:
+    st.markdown('<p class="info-text">PASO 2: SELECCIONA LAS 3 CARTAS DE LA MESA</p>', unsafe_allow_html=True)
+    st.write(f"Mano actual: **{st.session_state.mano[0]} - {st.session_state.mano[1]}**")
+
+    # Matriz completa de 52 cartas
+    pintas = [('♠', 'picas'), ('♥', 'coraz'), ('♦', 'diam'), ('♣', 'trebol')]
+    ranks = ['A','K','Q','J','10','9','8','7','6','5','4','3','2']
+
+    for simbolo, nombre in pintas:
+        cols = st.columns(13)
+        for i, r in enumerate(ranks):
+            label = f"{r}{simbolo}"
+            # Color del texto según la pinta
+            if cols[i].button(label, key=f"f_{label}"):
+                if len(st.session_state.flop) < 3:
+                    st.session_state.flop.append({'r': r, 's': simbolo})
+
+    # Mostrar el Flop elegido
+    if st.session_state.flop:
+        st.markdown('<p class="info-text">TABLERO ACTUAL</p>', unsafe_allow_html=True)
+        cols_f = st.columns(3)
+        for idx, card in enumerate(st.session_state.flop):
+            color = "red" if card['s'] in ['♥', '♦'] else "white"
+            cols_f[idx].markdown(f"<div style='background:white; color:{color}; padding:10px; border-radius:5px; text-align:center; font-size:1.5rem; font-weight:bold;'>{card['r']}{card['s']}</div>", unsafe_allow_html=True)
+
+    # Lógica de Retroalimentación Post-Flop
+    if len(st.session_state.flop) == 3:
+        st.divider()
+        f_ranks = [c['r'] for c in st.session_state.flop]
+        f_suits = [c['s'] for c in st.session_state.flop]
         
-        <button class="btn-reset" onclick="reset()">SIGUIENTE MANO</button>
-    </div>
+        # IF de conexión: ¿Alguna de mis cartas está en el flop?
+        conectado = any(r in f_ranks for r in st.session_state.mano)
+        
+        # IF de peligro: ¿Hay 3 del mismo palo?
+        color_peligro = any(f_suits.count(s) == 3 for s in set(f_suits))
+        
+        # IF de mesa doblada
+        mesa_doblada = len(set(f_ranks)) < 3
 
-    <script>
-        const ranks = ['A','K','Q','J','10','9','8','7','6','5','4','3','2'];
-        const suits = [{s:'♠', c:'picas'}, {s:'♥', c:'coraz'}, {s:'♦', c:'diam'}, {s:'♣', c:'trebol'}];
-        let myHand = []; let flopHand = [];
+        # Mensajes de Python
+        if conectado:
+            st.success("✅ **¡CONECTADO!** Tienes juego. Evalúa la fuerza de tu apuesta.")
+        else:
+            st.warning("❌ **NO CONECTÓ.** La mesa no te favorece. Juega con cautela.")
 
-        function createGrid() {
-            const container = document.getElementById('grid-me');
-            suits.forEach(suit => {
-                ranks.forEach(rank => {
-                    const b = document.createElement('button');
-                    b.innerText = rank + suit.s;
-                    b.className = `card-btn ${suit.c}`;
-                    b.onclick = () => {
-                        if (myHand.length < 2) handleMyHand(rank, suit.s, b);
-                        else if (flopHand.length < 3) handleFlop(rank, suit.s, b);
-                    };
-                    container.appendChild(b);
-                });
-            });
-        }
+        if color_peligro:
+            st.error("⚠️ **PELIGRO DE COLOR:** La mesa tiene 3 cartas de la misma pinta.")
+        
+        if mesa_doblada:
+            st.error("⚠️ **PELIGRO DE FULL:** La mesa tiene cartas repetidas.")
 
-        function handleMyHand(r, s, btn) {
-            if(!btn.classList.contains('active')) {
-                myHand.push({r, s});
-                btn.classList.add('active');
-                if(myHand.length === 2) calcPreflop();
-            }
-        }
-
-        function handleFlop(r, s, btn) {
-            if(!btn.classList.contains('active')) {
-                flopHand.push({r, s});
-                btn.classList.add('active');
-                renderFlop();
-                if(flopHand.length === 3) analyzeMesa();
-            }
-        }
-
-        function calcPreflop() {
-            const res = document.getElementById('res');
-            const dec = document.getElementById('dec');
-            res.style.display = 'block';
-            
-            const r1 = myHand[0].r, r2 = myHand[1].r;
-            const sameSuit = myHand[0].s === myHand[1].s;
-            const good = (r1 === r2 || r1 === 'A' || r2 === 'A' || (r1 === 'K' && sameSuit));
-            
-            dec.innerText = good ? "RAISE / PUSH" : "FOLD";
-            res.style.backgroundColor = good ? "#1b5e20" : "#b71c1c";
-            if(good) document.getElementById('flop-area').style.display = 'block';
-        }
-
-        function renderFlop() {
-            const view = document.getElementById('flop-view');
-            view.innerHTML = flopHand.map(c => `
-                <div class="card-mini" style="color:${(c.s=='♥'||c.s=='♦')?'red':'black'}">
-                    <span>${c.r}</span><span>${c.s}</span>
-                </div>`).join('');
-        }
-
-        function analyzeMesa() {
-            const ana = document.getElementById('ana-flop');
-            const dan = document.getElementById('danger-flop');
-            document.getElementById('analysis-container').style.display = 'block';
-            
-            const allCards = [...myHand, ...flopHand];
-            const myRanks = myHand.map(h => h.r);
-            const flopRanks = flopHand.map(f => f.r);
-            
-            // 1. EVALUAR TU MANO
-            let status = "CARTA ALTA: No conectaste nada.";
-            const matches = flopRanks.filter(r => myRanks.includes(r));
-            
-            if (myRanks[0] === myRanks[1]) {
-                if (matches.includes(myRanks[0])) status = "¡SET! Tienes Trío. Busca el FULL HOUSE.";
-                else status = "PAREJA EN MANO: Cuidado con cartas mayores.";
-            } else if (matches.length === 2) {
-                status = "¡DOBLES PAREJAS! Mano muy fuerte.";
-            } else if (matches.length === 1) {
-                status = "TOP PAIR: Tienes pareja con la mesa.";
-            }
-
-            // 2. ALERTAS DE PELIGRO (LO QUE PUEDE TENER EL VILLANO)
-            let danger = "";
-            const suitCounts = {};
-            allCards.forEach(c => suitCounts[c.s] = (suitCounts[c.s] || 0) + 1);
-            
-            const mesaSuits = {};
-            flopHand.forEach(c => mesaSuits[c.s] = (mesaSuits[c.s] || 0) + 1);
-
-            if (Object.values(mesaSuits).some(v => v === 3)) danger = "⚠️ PELIGRO COLOR: 3 del mismo palo en mesa.";
-            else if (Object.values(suitCounts).some(v => v === 4)) danger = "💡 PROYECTO COLOR: Te falta una para el Color.";
-            
-            const isPairedMesa = new Set(flopRanks).size < 3;
-            if (isPairedMesa) danger += " <br>⚠️ MESA DOBLADA: Villano puede tener FULL.";
-
-            ana.innerHTML = "<b>TU ESTADO:</b> " + status;
-            dan.innerHTML = danger;
-        }
-
-        function reset() {
-            myHand = []; flopHand = [];
-            document.getElementById('res').style.display = 'none';
-            document.getElementById('flop-area').style.display = 'none';
-            document.getElementById('analysis-container').style.display = 'none';
-            document.querySelectorAll('.card-btn').forEach(b => b.classList.remove('active'));
-        }
-
-        createGrid();
-    </script>
-</body>
-</html>
-"""
-components.html(html_code, height=950, scrolling=True)
+        if st.button("🔄 FINALIZAR Y VOLVER A EMPEZAR"):
+            st.session_state.clear()
+            st.rerun()
