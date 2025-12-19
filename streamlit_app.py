@@ -1,90 +1,75 @@
 import streamlit as st
 import streamlit.components.v1 as components
 
-st.set_page_config(page_title="Poker MTT Helper", layout="centered")
+st.set_page_config(page_title="POKER MTT FAST", layout="centered")
 
 html_code = """
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
-        body { font-family: 'Arial Black', sans-serif; background: #000; color: #fff; text-align: center; margin: 0; }
-        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; max-width: 380px; margin: 0 auto; padding: 10px; }
-        button { padding: 15px; font-size: 1.4rem; background: #222; color: #fff; border: 2px solid #444; border-radius: 8px; cursor: pointer; }
-        button.active { background: #00ff00 !important; color: #000 !important; }
+        body { font-family: sans-serif; background: #000; color: #fff; text-align: center; margin: 0; padding: 10px; }
+        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; max-width: 400px; margin: 0 auto; }
+        button { padding: 15px 0; font-size: 1.4rem; background: #222; color: #fff; border: 1px solid #444; border-radius: 8px; cursor: pointer; }
+        button.active { background: #00ff00 !important; color: #000 !important; font-weight: bold; }
         
-        .suit-toggle { display: none; gap: 10px; max-width: 380px; margin: 10px auto; padding: 0 10px; }
-        .s-btn { flex: 1; padding: 15px; background: #333; color: #fff; border-radius: 8px; border: 2px solid #444; font-size: 1rem; font-weight: bold; }
-        .s-btn.active { background: #007bff !important; border-color: #fff; }
+        .bb-selector { display: flex; justify-content: space-around; margin: 15px auto; max-width: 400px; background: #111; padding: 10px; border-radius: 10px; }
+        .bb-btn { flex: 1; margin: 0 5px; font-size: 0.9rem; padding: 10px 0; background: #333; border: 1px solid #555; }
+        .bb-btn.active { background: #ffcc00 !important; color: #000 !important; }
 
-        #res { display: none; margin-top: 15px; background: #111; padding: 15px; border-radius: 20px; border: 2px solid #333; }
-        .banner { font-size: 2.2rem; margin-bottom: 15px; border-radius: 10px; padding: 10px; font-weight: bold; }
-        
-        .option { margin-bottom: 20px; padding: 10px; border-bottom: 1px solid #333; }
-        .opt-t { color: #ffcc00; font-size: 1rem; display: block; margin-bottom: 10px; text-transform: uppercase; }
-        .cards { display: flex; justify-content: center; gap: 8px; margin-bottom: 10px; }
-        
-        .card { background: #fff; color: #000; width: 55px; height: 80px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: bold; position: relative; box-shadow: 0 4px 8px rgba(0,0,0,0.5); }
-        .card.red { color: #d32f2f; }
-        .card::after { content: '♠'; font-size: 0.8rem; position: absolute; bottom: 3px; right: 5px; color: #000; }
-        .card.red::after { content: '♥'; color: #d32f2f; }
-        
-        .rank-txt { font-size: 1.3rem; font-weight: bold; color: #00ff00; display: block; margin-top: 5px; }
-        .type-tag { font-size: 0.9rem; color: #aaa; margin-bottom: 10px; display: block; }
-        
-        .btn-clear { width: 90%; max-width: 380px; padding: 18px; margin: 20px auto; background: #c0392b; color: white; border: none; border-radius: 12px; font-size: 1.1rem; font-weight: bold; cursor: pointer; display: block; }
+        .suit-box { display: none; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px auto; max-width: 400px; }
+        .s-btn { padding: 20px; font-size: 1.2rem; font-weight: bold; border-radius: 10px; background: #0055ff; color: #fff; border: none; }
+        .s-btn.of { background: #555; }
+
+        #res { display: none; margin-top: 10px; border: 3px solid #00ff00; background: #050505; padding: 20px; border-radius: 15px; }
+        .dec { font-size: 2.8rem; font-weight: bold; margin-bottom: 5px; }
+        .tier { font-size: 1.2rem; color: #aaa; margin-bottom: 15px; }
+        .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .stat-card { background: #1a1a1a; padding: 10px; border-radius: 8px; border: 1px solid #333; }
+        .stat-val { font-size: 1.5rem; font-weight: bold; display: block; }
+        .btn-clear { width: 100%; padding: 20px; background: #e74c3c; color: #fff; font-size: 1.5rem; font-weight: bold; border: none; border-radius: 12px; margin-top: 20px; }
     </style>
 </head>
 <body>
+    <div class="bb-selector">
+        <button class="bb-btn" id="bb1" onclick="setBB(10)"> <10 BB </button>
+        <button class="bb-btn active" id="bb2" onclick="setBB(30)"> 10-40 BB </button>
+        <button class="bb-btn" id="bb3" onclick="setBB(50)"> 40+ BB </button>
+    </div>
+
     <div class="grid" id="g"></div>
     
-    <div class="suit-toggle" id="stog">
-        <button class="s-btn" id="sT" onclick="setS(true)">SUITED (Mismo Palo)</button>
-        <button class="s-btn" id="sF" onclick="setS(false)">OFFSUIT (Distinto)</button>
+    <div class="suit-box" id="sb">
+        <button class="s-btn" onclick="setS(true)">SUITED (s)</button>
+        <button class="s-btn of" onclick="setS(false)">OFFSUIT (o)</button>
     </div>
 
     <div id="res">
-        <div id="banner" class="banner"></div>
-        <div id="type-display" class="type-tag"></div>
-        
-        <div class="option">
-            <span class="opt-t">Mejor Posibilidad (El Sueño)</span>
-            <div class="cards" id="c1"></div>
-            <div class="rank-txt" id="t1"></div>
+        <div id="dec" class="dec"></div>
+        <div id="tier" class="tier"></div>
+        <div class="stats">
+            <div class="stat-card"><span>EQUITY ITM</span><span class="stat-val" id="itm" style="color:#00ff00"></span></div>
+            <div class="stat-card"><span>RANGO</span><span class="stat-val" id="rnk"></span></div>
         </div>
-        
-        <div class="option" style="border:none;">
-            <span class="opt-t">Segunda Posibilidad</span>
-            <div class="cards" id="c2"></div>
-            <div class="rank-txt" id="t2"></div>
-        </div>
-
-        <button class="btn-clear" onclick="resetApp()">🔄 NUEVA MANO / LIMPIAR</button>
+        <button class="btn-clear" onclick="reset()">SIGUIENTE MANO</button>
     </div>
 
     <script>
-        const rs = ['A','K','Q','J','T','9','8','7','6','5','4','3','2'];
-        let sel = []; let same = null;
-        const g = document.getElementById('g');
+        const cards = ['A','K','Q','J','T','9','8','7','6','5','4','3','2'];
+        let sel = []; let same = null; let bbs = 30;
 
         function init() {
-            g.innerHTML = "";
-            rs.forEach(r => {
-                const b = document.createElement('button');
-                b.innerText = r;
-                b.id = "btn-" + r;
+            const g = document.getElementById('g'); g.innerHTML = "";
+            cards.forEach(c => {
+                const b = document.createElement('button'); b.innerText = c;
                 b.onclick = () => {
                     if(sel.length < 2) {
-                        sel.push(r);
-                        b.classList.add('active');
+                        sel.push(c); b.classList.add('active');
                         if(sel.length === 2) {
-                            if(sel[0] === sel[1]) {
-                                same = false; 
-                                calc();
-                            } else {
-                                document.getElementById('stog').style.display = 'flex';
-                            }
+                            if(sel[0] === sel[1]) { same=false; calc(); }
+                            else { document.getElementById('sb').style.display = 'grid'; }
                         }
                     }
                 };
@@ -92,70 +77,54 @@ html_code = """
             });
         }
 
-        function setS(v) { 
-            same = v; 
-            document.getElementById('sT').classList.toggle('active', v);
-            document.getElementById('sF').classList.toggle('active', !v);
-            calc(); 
+        function setBB(v) { 
+            bbs = v; 
+            document.querySelectorAll('.bb-btn').forEach(b => b.classList.remove('active'));
+            if(v==10) document.getElementById('bb1').classList.add('active');
+            if(v==30) document.getElementById('bb2').classList.add('active');
+            if(v==50) document.getElementById('bb3').classList.add('active');
+            if(sel.length==2) calc();
         }
 
-        function resetApp() {
+        function setS(v) { same = v; calc(); }
+
+        function reset() {
             sel = []; same = null;
             document.getElementById('res').style.display = 'none';
-            document.getElementById('stog').style.display = 'none';
+            document.getElementById('sb').style.display = 'none';
             init();
         }
 
-        function draw(v, red) { return `<div class="card ${red?'red':''}">${v}</div>`; }
-
         function calc() {
+            document.getElementById('res').style.display = 'block';
+            document.getElementById('sb').style.display = 'none';
             const h1 = sel[0], h2 = sel[1];
             const isP = h1 === h2;
-            document.getElementById('res').style.display = 'block';
-            document.getElementById('stog').style.display = isP ? 'none' : 'flex';
+            const idx1 = cards.indexOf(h1), idx2 = cards.indexOf(h2);
             
-            const typeDisp = document.getElementById('type-display');
-            typeDisp.innerText = isP ? "PAREJA EN MANO" : (same ? "MANO SUITED (s)" : "MANO OFFSUIT (o)");
+            let d = document.getElementById('dec'), t = document.getElementById('tier');
+            let i = document.getElementById('itm'), r = document.getElementById('rnk');
 
-            let b = document.getElementById('banner');
-            let ok = isP || h1 === 'A' || (h1 === 'K' && (same || rs.indexOf(h2) < 5));
-            b.innerText = ok ? "RAISE 🔥" : "FOLD 💀";
-            b.style.background = ok ? "#27ae60" : "#c0392b";
-
-            let r1="", r2="", t1="", t2="";
-
-            if(isP) {
-                r1 = draw(h1, true) + draw(h1, false) + draw('X', true);
-                t1 = "SET (TRIO) - 4ta Jerarquía";
-                r2 = draw('J', true) + draw('7', false) + draw('2', true);
-                t2 = "OVERPAIR - 8va Jerarquía";
-            } else if (sel.includes('A') && sel.includes('Q')) {
-                r1 = draw('K', true) + draw('J', false) + draw('T', true);
-                t1 = "ESCALERA - 6ta Jerarquía";
-                r2 = draw('A', false) + draw('Q', true) + draw('5', false);
-                t2 = "TOP PAIR - 9na Jerarquía";
-            } else if (same) {
-                r1 = draw('X', true) + draw('X', true) + draw('X', true);
-                t1 = "COLOR (FLUSH) - 5ta Jerarquía";
-                r2 = draw(h1, false) + draw('J', true) + draw('4', false);
-                t2 = "PROYECTO DE COLOR";
+            if (isP && idx1 <= 4) { // AA-TT
+                d.innerText = "ALL-IN / RAISE"; d.style.color = "#00ff00";
+                t.innerText = "TIER S: PREMIUM PAIR"; i.innerText = "85%"; r.innerText = "#1";
+            } else if (h1 === 'A' && (idx2 <= 2 || (same && idx2 <= 9))) { // AK, AQ, AJ o Ax suited
+                d.innerText = (bbs < 15) ? "ALL-IN" : "RAISE"; d.style.color = "#00ff00";
+                t.innerText = "TIER A: TOP RANGE"; i.innerText = "65%"; r.innerText = "#2";
+            } else if (idx1 <= 2 && idx2 <= 3 && same) { // KQs, KJs, QJs
+                d.innerText = (bbs < 12) ? "SHOVE" : "OPEN RAISE"; d.style.color = "#ffff00";
+                t.innerText = "TIER B: BROADWAY SUITED"; i.innerText = "55%"; r.innerText = "#3";
+            } else if (isP && idx1 > 4) { // Small pairs
+                d.innerText = (bbs < 20) ? "PUSH/FOLD" : "SET MINING"; d.style.color = "#ffcc00";
+                t.innerText = "TIER C: POCKET PAIR"; i.innerText = "48%"; r.innerText = "#4";
             } else {
-                r1 = draw(h1, true) + draw(h2, false) + draw('X', true);
-                t1 = "DOBLES PAREJAS - 7ma Jerarquía";
-                r2 = draw(h1, true) + draw('9', false) + draw('4', true);
-                t2 = "TOP PAIR - 9na Jerarquía";
+                d.innerText = "FOLD"; d.style.color = "#ff4444";
+                t.innerText = "TIER F: BASURA"; i.innerText = "18%"; r.innerText = "#10";
             }
-
-            document.getElementById('c1').innerHTML = r1;
-            document.getElementById('t1').innerText = t1;
-            document.getElementById('c2').innerHTML = r2;
-            document.getElementById('t2').innerText = t2;
         }
-
         init();
     </script>
 </body>
 </html>
 """
-
-components.html(html_code, height=1000, scrolling=True)
+components.html(html_code, height=750)
