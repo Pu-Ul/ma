@@ -1,7 +1,7 @@
 import streamlit as st
 import streamlit.components.v1 as components
 
-st.set_page_config(page_title="PauGaR - Radar Visual", layout="centered")
+st.set_page_config(page_title="PauGaR Poker Radar", layout="centered")
 
 html_code = """
 <!DOCTYPE html>
@@ -10,52 +10,54 @@ html_code = """
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
-        body { font-family: sans-serif; background: #000; color: #fff; text-align: center; margin: 0; padding: 5px; overflow: hidden; }
+        body { font-family: 'Helvetica', sans-serif; background: #000; color: #fff; text-align: center; margin: 0; padding: 10px; overflow: hidden; }
         
-        /* GRID COMPACTO */
-        .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 8px; }
+        /* TECLADO DE CARTAS COMPACTO */
+        .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 12px; }
         .c-btn { padding: 12px 0; font-size: 1.1rem; background: #1a1a1a; color: #fff; border: 1px solid #444; border-radius: 6px; font-weight: bold; }
         .c-btn.active { background: #00ff00 !important; color: #000 !important; border: 2px solid #fff; }
         
-        /* SELECTOR PALO MINI */
-        .suit-box { display: flex; gap: 8px; margin-bottom: 10px; }
-        .s-btn { flex: 1; padding: 10px; font-size: 0.9rem; border-radius: 8px; border: 1px solid #333; background: #111; color: #666; }
-        .active-s { background: #0055ff !important; color: #fff !important; }
-        .active-o { background: #444 !important; color: #fff !important; }
+        /* SELECTORES TÉCNICOS */
+        .suit-box { display: flex; gap: 8px; margin-bottom: 15px; }
+        .s-btn { flex: 1; padding: 12px; font-size: 0.9rem; border-radius: 8px; border: 1px solid #333; background: #111; color: #777; font-weight: bold; }
+        .active-s { background: #0055ff !important; color: #fff !important; border-color: #fff !important; }
+        .active-o { background: #444 !important; color: #fff !important; border-color: #fff !important; }
 
-        /* PANEL DE DECISIÓN VISUAL */
-        #res { display: none; padding: 15px; border-radius: 12px; margin-top: 5px; }
-        .dec-txt { font-size: 2.5rem; font-weight: 900; margin: 0; }
+        /* RESULTADO SEMÁFORO PROFESIONAL */
+        #res { display: none; padding: 15px; border-radius: 12px; margin-top: 5px; box-shadow: 0 0 15px rgba(0,0,0,0.5); }
+        .dec-txt { font-size: 2.8rem; font-weight: 900; margin: 0; text-transform: uppercase; }
         
-        /* ESCUELA VISUAL (SUEÑO) */
-        .edu-card { background: rgba(255,255,255,0.1); margin-top: 10px; padding: 10px; border-radius: 10px; text-align: left; border-left: 4px solid #ffcc00; }
-        .edu-t { font-size: 0.9rem; color: #ffcc00; font-weight: bold; display: block; }
-        .edu-x { font-size: 0.85rem; color: #ddd; line-height: 1.2; }
+        /* SECCIÓN EL SUEÑO (JERARQUÍA REAL) */
+        .dream-card { background: rgba(0,0,0,0.6); margin-top: 10px; padding: 12px; border-radius: 10px; text-align: left; border-left: 5px solid #ffcc00; }
+        .dream-t { font-size: 0.75rem; color: #ffcc00; font-weight: bold; text-transform: uppercase; display: block; }
+        .dream-val { font-size: 1.2rem; color: #fff; font-weight: bold; display: block; margin: 2px 0; }
+        .dream-info { font-size: 0.8rem; color: #bbb; line-height: 1.2; display: block; }
 
-        .btn-reset { width: 100%; padding: 15px; background: #fff; color: #000; font-size: 1.2rem; font-weight: bold; border-radius: 10px; margin-top: 10px; border: none; }
-        .footer { font-size: 0.7rem; color: #333; margin-top: 10px; }
+        .btn-reset { width: 100%; padding: 18px; background: #fff; color: #000; font-size: 1.3rem; font-weight: 900; border-radius: 10px; margin-top: 12px; border: none; }
+        .footer { font-size: 0.8rem; color: #333; margin-top: 15px; border-top: 1px solid #111; padding-top: 5px; }
     </style>
 </head>
 <body>
     <div class="grid" id="g"></div>
     
     <div class="suit-box">
-        <button class="s-btn" id="btnS" onclick="setS(true)">MISMO PALO (s)</button>
-        <button class="s-btn" id="btnO" onclick="setS(false)">DISTINTO (o)</button>
+        <button class="s-btn" id="btnS" onclick="setS(true)">SUITED (Mismo palo)</button>
+        <button class="s-btn" id="btnO" onclick="setS(false)">OFFSUIT (Distintos)</button>
     </div>
 
     <div id="res">
         <p id="dec" class="dec-txt"></p>
         
-        <div class="edu-card">
-            <span id="eduT" class="edu-t"></span>
-            <span id="eduX" class="edu-x"></span>
+        <div class="dream-card">
+            <span class="dream-t">EL SUEÑO (Potencial)</span>
+            <span id="dream" class="dream-val"></span>
+            <span id="info" class="dream-info"></span>
         </div>
         
-        <button class="btn-reset" onclick="reset()">SIGUIENTE</button>
+        <button class="btn-reset" onclick="reset()">SIGUIENTE MANO</button>
     </div>
 
-    <div class="footer">PauGaR - Guía Pedagógica</div>
+    <div class="footer">TERMINOLOGÍA PROFESIONAL • PAUGAR</div>
 
     <script>
         const cards = ['A','K','Q','J','10','9','8','7','6','5','4','3','2'];
@@ -87,26 +89,33 @@ html_code = """
         }
 
         function calc() {
-            const h1 = sel[0], h2 = sel[1];
-            const idx1 = cards.indexOf(h1), idx2 = cards.indexOf(h2);
-            const isP = h1 === h2;
-            const dist = Math.abs(idx1 - idx2);
+            const h1 = sel[0], h2 = sel[1], idx1 = cards.indexOf(h1), idx2 = cards.indexOf(h2);
+            const isP = h1 === h2, dist = Math.abs(idx1 - idx2);
             const r = document.getElementById('res');
             r.style.display = 'block';
 
-            // DECISIÓN
+            // DECISIÓN: PUSH (ENTRAR) O FOLD (RETIRARSE)
             if (isP && idx1 <= 7 || h1 === 'A' || (h1 === 'K' && (same || idx2 <= 3))) { 
-                document.getElementById('dec').innerText = "JUEGA"; r.style.backgroundColor = "#27ae60"; 
+                document.getElementById('dec').innerText = "PUSH"; r.style.backgroundColor = "#27ae60"; 
             } else {
-                document.getElementById('dec').innerText = "PASAR"; r.style.backgroundColor = "#c0392b";
+                document.getElementById('dec').innerText = "FOLD"; r.style.backgroundColor = "#c0392b";
             }
 
-            // PEDAGOGÍA
-            const et = document.getElementById('eduT'), ex = document.getElementById('eduX');
-            if (isP) { et.innerText = "FULL HOUSE"; ex.innerText = "Trío + Pareja. ¡Mano muy fuerte!"; }
-            else if (same) { et.innerText = "COLOR (FLUSH)"; ex.innerText = "5 cartas del mismo palo."; }
-            else if (dist <= 4) { et.innerText = "ESCALERA"; ex.innerText = "5 números seguidos."; }
-            else { et.innerText = "CARTA ALTA"; ex.innerText = "Buscas la pareja más alta."; }
+            // EL SUEÑO: TERMINOLOGÍA TÉCNICA
+            const dV = document.getElementById('dream'), dI = document.getElementById('info');
+            if (isP) { 
+                dV.innerText = "FULL HOUSE / QUADS"; 
+                dI.innerText = "Buscas el 'Set' (trío) para completar un Full (3+2) o un Póker (4)."; 
+            } else if (same) { 
+                dV.innerText = "FLUSH (COLOR)"; 
+                dI.innerText = "Buscas 5 cartas del mismo palo. Es el 'Nut' (la mejor) si tienes el As."; 
+            } else if (dist <= 4) { 
+                dV.innerText = "STRAIGHT (ESCALERA)"; 
+                dI.innerText = "Buscas 5 cartas en orden numérico. Muy fuerte si es a las cartas altas."; 
+            } else { 
+                dV.innerText = "TOP PAIR"; 
+                dI.innerText = "Buscas conectar la pareja más alta de la mesa para ganar por fuerza."; 
+            }
         }
 
         function reset() {
@@ -121,4 +130,4 @@ html_code = """
 </body>
 </html>
 """
-components.html(html_code, height=600)
+components.html(html_code, height=650)
