@@ -95,4 +95,61 @@ html_code = """
             same = v; 
             document.getElementById('btnS').className = v ? "s-btn active-s" : "s-btn";
             document.getElementById('btnO').className = !v ? "s-btn active-o" : "s-btn";
-            if(sel.length == 2)
+            if(sel.length == 2) calc();
+        }
+
+        function checkAutoCalc() {
+            if(sel.length === 2) {
+                if(sel[0] === sel[1]) {
+                    same = false; 
+                    document.getElementById('sm').style.opacity = "0.2";
+                    calc();
+                } else if(same !== null) {
+                    calc();
+                }
+            }
+        }
+
+        function reset() {
+            sel = []; same = null;
+            document.getElementById('res').style.display = 'none';
+            document.getElementById('sm').style.opacity = "1";
+            document.getElementById('btnS').className = "s-btn";
+            document.getElementById('btnO').className = "s-btn";
+            init();
+        }
+
+        function calc() {
+            if(sel.length < 2 || (sel[0] !== sel[1] && same === null)) return;
+            
+            document.getElementById('res').style.display = 'block';
+            const h1 = sel[0], h2 = sel[1];
+            const idx1 = cards.indexOf(h1), idx2 = cards.indexOf(h2);
+            const isP = h1 === h2;
+            
+            let d = document.getElementById('dec'), t = document.getElementById('tier');
+            let i = document.getElementById('itm'), r = document.getElementById('rnk');
+
+            if (isP && idx1 <= 4) { 
+                d.innerText = "ALL-IN / RAISE"; d.style.color = "#00ff00";
+                t.innerText = "TIER S: PREMIUM PAIR"; i.innerText = "85%"; r.innerText = "1";
+            } else if (h1 === 'A' && (idx2 <= 2 || (same && idx2 <= 9))) {
+                d.innerText = (bbs < 15) ? "ALL-IN" : "RAISE"; d.style.color = "#00ff00";
+                t.innerText = "TIER A: TOP RANGE"; i.innerText = "65%"; r.innerText = "2";
+            } else if (idx1 <= 2 && idx2 <= 3 && same) {
+                d.innerText = (bbs < 12) ? "SHOVE" : "RAISE"; d.style.color = "#ffff00";
+                t.innerText = "TIER B: BROADWAY SUITED"; i.innerText = "55%"; r.innerText = "3";
+            } else if (isP) {
+                d.innerText = (bbs < 15) ? "PUSH/FOLD" : "SET MINING"; d.style.color = "#ffcc00";
+                t.innerText = "TIER C: POCKET PAIR"; i.innerText = "48%"; r.innerText = "4";
+            } else {
+                d.innerText = "FOLD"; d.style.color = "#ff4444";
+                t.innerText = "TIER F: BASURA"; i.innerText = "18%"; r.innerText = "10";
+            }
+        }
+        init();
+    </script>
+</body>
+</html>
+"""
+components.html(html_code, height=850, scrolling=False)
