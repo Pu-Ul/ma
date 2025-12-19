@@ -1,7 +1,7 @@
 import streamlit as st
 import streamlit.components.v1 as components
 
-st.set_page_config(page_title="PauGaR - Radar Total", layout="centered")
+st.set_page_config(page_title="PauGaR - Radar de Alta Velocidad", layout="centered")
 
 html_code = """
 <!DOCTYPE html>
@@ -11,176 +11,136 @@ html_code = """
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
         body { font-family: 'Arial Black', sans-serif; background: #000; color: #fff; text-align: center; margin: 0; padding: 5px; }
-        .row-label { font-size: 0.7rem; color: #ffcc00; font-weight: bold; display: block; margin: 10px 0; text-transform: uppercase; }
+        .row-label { font-size: 0.65rem; color: #ffcc00; font-weight: bold; display: block; margin: 5px 0; text-transform: uppercase; }
         
-        /* BOTONES SUPERIORES Y CARTAS */
-        .btn-group { display: flex; justify-content: space-around; gap: 5px; margin-bottom: 10px; }
-        .mini-btn { flex: 1; font-size: 0.7rem; padding: 12px 0; background: #222; border: 1px solid #444; color: #888; border-radius: 8px; font-weight: bold; }
-        .mini-btn.active { background: #ffcc00 !important; color: #000 !important; border-color: #fff; }
+        /* MATRIZ DE 52 CARTAS */
+        .poker-grid { display: grid; grid-template-columns: repeat(13, 1fr); gap: 2px; margin-bottom: 5px; }
+        .card-btn { padding: 8px 0; font-size: 0.7rem; background: #1a1a1a; color: #fff; border: 1px solid #333; border-radius: 4px; font-weight: bold; }
+        .card-btn.picas { border-bottom: 3px solid #555; }
+        .card-btn.coraz { border-bottom: 3px solid #ff4444; color: #ff8888; }
+        .card-btn.diam { border-bottom: 3px solid #ff4444; color: #ff8888; }
+        .card-btn.trebol { border-bottom: 3px solid #00ff00; color: #88ff88; }
+        .card-btn.active { background: #fff !important; color: #000 !important; }
 
-        .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 10px; }
-        .c-btn { padding: 12px 0; font-size: 1.1rem; background: #1a1a1a; color: #fff; border: 1px solid #333; border-radius: 8px; }
-        .c-btn.active { background: #00ff00 !important; color: #000 !important; border: 2px solid #fff; }
+        /* DECISIÓN COMPACTA */
+        #res { display: none; padding: 10px; border-radius: 10px; margin: 10px 0; border: 2px solid #fff; }
+        .dec-txt { font-size: 1.8rem; font-weight: 900; margin: 0; }
         
-        /* RESULTADO */
-        #res { display: none; padding: 20px; border-radius: 20px; margin-top: 10px; border: 4px solid #00ff00; }
-        .dec-txt { font-size: 3.5rem; font-weight: 900; margin: 0; }
+        /* ÁREA DE MESA (FLOP) */
+        #flop-area { display: none; background: #111; padding: 10px; border-radius: 10px; border: 1px solid #00ff00; }
+        .flop-display { display: flex; justify-content: center; gap: 5px; margin: 5px 0; }
+        .card-mini { width: 35px; height: 50px; background: #fff; color: #000; border-radius: 4px; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 0.8rem; font-weight: bold; }
 
-        /* MÓDULO FLOP CON PINTAS */
-        #flop-section { display: none; background: #111; padding: 15px; border-radius: 20px; border: 2px solid #00ff00; margin-top: 15px; }
-        .flop-display { display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; min-height: 90px; }
-        
-        .card-ui { 
-            width: 55px; height: 80px; background: #fff; color: #000; 
-            border-radius: 10px; display: flex; flex-direction: column; 
-            justify-content: center; align-items: center; font-weight: 900; font-size: 1.3rem;
-            box-shadow: 0 4px 10px rgba(0,255,0,0.2);
-        }
-
-        .suit-selector { display: flex; justify-content: center; gap: 10px; margin-top: 10px; display: none; }
-        .pinta-btn { flex: 1; padding: 15px; font-size: 1.8rem; border-radius: 10px; border: 2px solid #444; background: #222; color: #fff; }
-        .red-suit { color: #ff4444 !important; border-color: #ff4444 !important; }
-
-        /* HISTORIAL */
-        .hist-box { margin-top: 25px; text-align: left; background: #0a0a0a; padding: 15px; border-radius: 12px; border: 1px solid #222; }
-        .h-item { font-size: 0.75rem; padding: 10px 0; border-bottom: 1px solid #222; }
-        .v-input { background: #222; border: 1px solid #444; color: #ffcc00; padding: 6px; border-radius: 5px; width: 85px; font-weight: bold; }
-        
-        .btn-action { width: 100%; padding: 22px; font-size: 1.5rem; font-weight: 900; border-radius: 15px; margin-top: 15px; border: none; }
+        .btn-reset { width: 100%; padding: 15px; background: #fff; color: #000; font-size: 1.2rem; font-weight: 900; border-radius: 8px; margin-top: 10px; border: none; }
+        .ana-text { font-size: 0.8rem; color: #ffcc00; font-weight: bold; }
     </style>
 </head>
 <body>
-    <div class="btn-group">
-        <button class="mini-btn active">30 BB</button>
-        <button class="mini-btn">LATE POS</button>
-    </div>
-
-    <span class="row-label">TUS CARTAS</span>
-    <div class="grid" id="g"></div>
-    <div class="btn-group">
-        <button class="mini-btn" id="btnS" onclick="setS(true)">SUITED (s)</button>
-        <button class="mini-btn" id="btnO" onclick="setS(false)">OFFSUIT (o)</button>
-    </div>
+    <span class="row-label">1. TUS 2 CARTAS (Toca 2)</span>
+    <div id="grid-me" class="poker-grid"></div>
 
     <div id="res">
         <p id="dec" class="dec-txt"></p>
-        <button class="btn-action" style="background:#00ff00; color:#000;" onclick="showFlop()">INGRESAR FLOP (PINTAS)</button>
-        <button class="btn-action" style="background:#fff; color:#000;" onclick="reset()">OTRA MANO</button>
-    </div>
-
-    <div id="flop-section">
-        <span class="row-label">TABLERO DE MESA (FLOP)</span>
-        <div class="flop-display" id="flop-view"></div>
-        
-        <div id="card-grid-flop" class="grid"></div>
-        
-        <div id="suit-picker" class="suit-selector">
-            <button class="pinta-btn" onclick="selectSuit('♠')">♠</button>
-            <button class="pinta-btn red-suit" onclick="selectSuit('♥')">♥</button>
-            <button class="pinta-btn red-suit" onclick="selectSuit('♦')">♦</button>
-            <button class="pinta-btn" onclick="selectSuit('♣')">♣</button>
+        <div id="flop-area">
+            <span class="row-label" style="color:#00ff00">2. EL FLOP (Toca 3 en la matriz)</span>
+            <div id="flop-view" class="flop-display"></div>
+            <p id="ana-flop" class="ana-text"></p>
         </div>
-        
-        <div id="ana-flop" style="color:#ffcc00; font-size:0.9rem; margin-top:10px; font-weight:bold;"></div>
-    </div>
-
-    <div class="hist-box">
-        <span style="color:#ffcc00; font-size:0.8rem; display:block; margin-bottom:10px;">HISTORIAL Y REGISTRO DE VILLANOS</span>
-        <div id="hList"></div>
+        <button class="btn-reset" onclick="reset()">OTRA MANO</button>
     </div>
 
     <script>
-        const cards = ['A','K','Q','J','10','9','8','7','6','5','4','3','2'];
-        let sel = []; let same = null; 
-        let tempVal = null; let flopFinal = [];
+        const ranks = ['A','K','Q','J','10','9','8','7','6','5','4','3','2'];
+        const suits = [
+            {s:'♠', c:'picas'}, {s:'♥', c:'coraz'}, 
+            {s:'♦', c:'diam'}, {s:'♣', c:'trebol'}
+        ];
+        let myHand = []; let flopHand = [];
 
-        function init() {
-            const g = document.getElementById('g'); g.innerHTML = "";
-            cards.forEach(c => {
-                const b = document.createElement('button'); b.innerText = c; b.className = "c-btn";
-                b.onclick = () => { if(sel.length < 2) { sel.push(c); b.classList.add('active'); if(sel.length==2 && same!==null) calc(); } };
-                g.appendChild(b);
+        function createGrid(targetId, callback) {
+            const container = document.getElementById(targetId);
+            suits.forEach(suit => {
+                ranks.forEach(rank => {
+                    const b = document.createElement('button');
+                    b.innerText = rank + suit.s;
+                    b.className = `card-btn ${suit.c}`;
+                    b.onclick = () => callback(rank, suit.s, b);
+                    container.appendChild(b);
+                });
             });
-            
-            const fg = document.getElementById('card-grid-flop'); fg.innerHTML = "";
-            cards.forEach(c => {
-                const b = document.createElement('button'); b.innerText = c; b.className = "c-btn";
-                b.onclick = () => { if(flopFinal.length < 3) { tempVal = c; document.getElementById('suit-picker').style.display = 'flex'; } };
-                fg.appendChild(b);
-            });
-            updateH();
         }
 
-        function setS(v) { same = v; if(sel.length == 2) calc(); }
-
-        function calc() {
-            const h1 = sel[0], h2 = sel[1];
-            const isGood = (h1==='A' || h1===h2 || (h1==='K' && same));
-            const r = document.getElementById('res'); r.style.display = 'block';
-            document.getElementById('dec').innerText = isGood ? "RAISE" : "FOLD";
-            r.style.backgroundColor = isGood ? "#27ae60" : "#c0392b";
-            saveH(sel.join("")+(same?'s':'o'), document.getElementById('dec').innerText);
+        function handleMyHand(r, s, btn) {
+            if(myHand.length < 2 && !btn.classList.contains('active')) {
+                myHand.push({r, s});
+                btn.classList.add('active');
+                if(myHand.length === 2) calcPreflop();
+            }
         }
 
-        function showFlop() { document.getElementById('flop-section').style.display = 'block'; }
+        function handleFlop(r, s, btn) {
+            if(flopHand.length < 3 && !btn.classList.contains('active')) {
+                flopHand.push({r, s});
+                btn.classList.add('active');
+                renderFlop();
+                if(flopHand.length === 3) analyzeMesa();
+            }
+        }
 
-        function selectSuit(suit) {
-            if(!tempVal || flopFinal.length >= 3) return;
-            flopFinal.push({v: tempVal, s: suit});
+        function calcPreflop() {
+            const res = document.getElementById('res');
+            const dec = document.getElementById('dec');
+            res.style.display = 'block';
             
+            const r1 = myHand[0].r, r2 = myHand[1].r;
+            const sameSuit = myHand[0].s === myHand[1].s;
+            const isPair = r1 === r2;
+            
+            // Lógica compacta
+            const good = (isPair || r1 === 'A' || r2 === 'A' || (r1 === 'K' && sameSuit));
+            dec.innerText = good ? "RAISE / PUSH" : "FOLD";
+            res.style.backgroundColor = good ? "#1b5e20" : "#b71c1c";
+            
+            if(good) document.getElementById('flop-area').style.display = 'block';
+        }
+
+        function renderFlop() {
             const view = document.getElementById('flop-view');
-            const isRed = (suit === '♥' || suit === '♦');
-            view.innerHTML += `<div class="card-ui" style="color:${isRed?'red':'black'}"><span>${tempVal}</span><span>${suit}</span></div>`;
-            
-            document.getElementById('suit-picker').style.display = 'none';
-            tempVal = null;
-            if(flopFinal.length === 3) analyze();
-        }
-
-        function analyze() {
-            const ana = document.getElementById('ana-flop');
-            const suits = flopFinal.map(f => f.s);
-            const isFlush = suits.every(s => s === suits[0]);
-            const isPair = new Set(flopFinal.map(f => f.v)).size < 3;
-            
-            if(isFlush) ana.innerHTML = "⚠️ ¡PELIGRO! MESA DE COLOR (FLUSH)";
-            else if(isPair) ana.innerHTML = "⚠️ ¡CUIDADO! MESA DOBLADA (POSIBLE FULL)";
-            else ana.innerHTML = "✅ MESA LIMPIA";
-        }
-
-        function saveH(m, a) {
-            let h = JSON.parse(localStorage.getItem('ph_v2')) || [];
-            h.unshift({m, a, v: '', t: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})});
-            if(h.length > 5) h.pop();
-            localStorage.setItem('ph_v2', JSON.stringify(h));
-            updateH();
-        }
-
-        function updateH() {
-            let h = JSON.parse(localStorage.getItem('ph_v2')) || [];
-            document.getElementById('hList').innerHTML = h.map((x, i) => `
-                <div class="h-item">
-                    ${x.t} | MIA: <b>${x.m}</b> | ACCIÓN: <b>${x.a}</b> | 
-                    GANÓ CON: <input class="v-input" placeholder="ej. A♥K♥" onchange="updateV(${i}, this.value)" value="${x.v}">
+            view.innerHTML = flopHand.map(c => `
+                <div class="card-mini" style="color:${(c.s=='♥'||c.s=='♦')?'red':'black'}">
+                    <span>${c.r}</span><span>${c.s}</span>
                 </div>`).join('');
         }
 
-        function updateV(i, val) {
-            let h = JSON.parse(localStorage.getItem('ph_v2'));
-            h[i].v = val;
-            localStorage.setItem('ph_v2', JSON.stringify(h));
+        function analyzeMesa() {
+            const ana = document.getElementById('ana-flop');
+            const allCards = [...myHand, ...flopHand];
+            
+            // Lógica de peligro simple
+            const suitCounts = {};
+            allCards.forEach(c => suitCounts[c.s] = (suitCounts[c.s] || 0) + 1);
+            const flushDraw = Object.values(suitCounts).some(v => v >= 4);
+            const isPairMesa = new Set(flopHand.map(f => f.r)).size < 3;
+
+            if(flushDraw) ana.innerHTML = "⚠️ PROYECTO COLOR DETECTADO";
+            else if(isPairMesa) ana.innerHTML = "⚠️ MESA DOBLADA: PELIGRO FULL";
+            else ana.innerHTML = "✅ MESA SEGURA: EVALÚA TU PAR";
         }
 
         function reset() {
-            sel = []; same = null; flopFinal = [];
+            myHand = []; flopHand = [];
             document.getElementById('res').style.display = 'none';
-            document.getElementById('flop-section').style.display = 'none';
-            document.getElementById('flop-view').innerHTML = "";
-            init();
+            document.getElementById('flop-area').style.display = 'none';
+            document.querySelectorAll('.card-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('ana-flop').innerText = "";
         }
-        init();
+
+        createGrid('grid-me', (r, s, b) => {
+            if(myHand.length < 2) handleMyHand(r, s, b);
+            else handleFlop(r, s, b);
+        });
     </script>
 </body>
 </html>
 """
-components.html(html_code, height=1350, scrolling=True)
+components.html(html_code, height=900, scrolling=True)
