@@ -1,7 +1,7 @@
 import streamlit as st
 import streamlit.components.v1 as components
 
-st.set_page_config(page_title="POKER RADAR EDU + HISTORIAL + CALMA", layout="centered")
+st.set_page_config(page_title="POKER RADAR EDU + CALMA", layout="centered")
 
 html_code = r"""
 <!DOCTYPE html>
@@ -30,11 +30,12 @@ html_code = r"""
     .dec { font-size:2.25rem; font-weight:1000; margin-bottom:6px; }
     .sub { color:#bbb; font-size:.92rem; margin-top:4px; }
 
-    .btn-row { display:flex; gap:8px; margin-top:12px; }
-    .btn { flex:1; padding:14px; border:none; border-radius:14px; font-weight:1000; font-size:1rem; cursor:pointer; }
+    .btn-row { display:flex; gap:8px; margin-top:12px; flex-wrap: wrap; }
+    .btn { flex:1; min-width: 140px; padding:14px; border:none; border-radius:14px; font-weight:1000; font-size:1rem; cursor:pointer; }
     .btn-new { background:#e74c3c; color:#fff; }
     .btn-round { background:#2ecc71; color:#000; }
     .btn-wipe { background:#444; color:#fff; }
+    .btn-calm { background:#aee8ff; color:#000; }
 
     .panel { margin-top:14px; text-align:left; background:#111; padding:12px; border-radius:14px; border:1px solid #222; }
     .title { color:#ffcc00; font-weight:1000; font-size:.98rem; display:block; margin-bottom:8px; }
@@ -43,7 +44,6 @@ html_code = r"""
     .b-pro { background:#00ff00; color:#000; }
     .b-pre { background:#00aaff; color:#000; }
     .b-warn { background:#ffcc00; color:#000; }
-    .b-calm { background:#aee8ff; color:#000; }
 
     table { width:100%; border-collapse:collapse; font-size:.85rem; }
     th { color:#666; text-align:left; border-bottom:1px solid #333; padding:6px 4px; }
@@ -63,6 +63,54 @@ html_code = r"""
       font-size:.95rem;
       transition:opacity .25s;
       opacity: 0.95;
+      white-space: pre-line;
+    }
+
+    /* Calm overlay */
+    #calmOverlay{
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 18px;
+      z-index: 9999;
+    }
+    #calmCard{
+      width: 100%;
+      max-width: 420px;
+      background:#0b0b0b;
+      border:1px solid #222;
+      border-radius:16px;
+      padding:16px;
+      text-align:left;
+    }
+    #calmTitle{ color:#aee8ff; font-weight:1000; font-size:1.05rem; margin-bottom:8px; }
+    #calmText{ color:#fff; font-size:1rem; line-height:1.4; margin-bottom:12px; }
+    #calmBar{
+      height: 10px;
+      border-radius:999px;
+      background:#111;
+      border:1px solid #222;
+      overflow:hidden;
+    }
+    #calmFill{
+      height: 100%;
+      width: 0%;
+      background:#aee8ff;
+      transition: width .2s linear;
+    }
+    #calmClose{
+      margin-top:12px;
+      width:100%;
+      padding:12px;
+      border:none;
+      border-radius:12px;
+      background:#444;
+      color:#fff;
+      font-weight:1000;
+      cursor:pointer;
     }
 
     .footer { margin-top:16px; color:#444; font-size:.9rem; }
@@ -89,9 +137,11 @@ html_code = r"""
       <div id="dec" class="dec"></div>
       <div class="sub" id="eduHint"></div>
       <div id="motivationBox">Respira. Vamos una mano a la vez.</div>
+
       <div class="btn-row">
         <button class="btn btn-new" onclick="resetHand()">NUEVA MANO</button>
         <button class="btn btn-round" onclick="newRound()">NUEVA RONDA</button>
+        <button class="btn btn-calm" onclick="startCalm10()">CALMA 10s</button>
       </div>
     </div>
 
@@ -124,6 +174,16 @@ html_code = r"""
     <div class="footer">Developed by <b>PauGaR</b></div>
   </div>
 
+  <!-- CALM OVERLAY -->
+  <div id="calmOverlay">
+    <div id="calmCard">
+      <div id="calmTitle">🫧 Calma 10 segundos</div>
+      <div id="calmText">Inhala 4… Exhala 6…<br>Una mano a la vez.</div>
+      <div id="calmBar"><div id="calmFill"></div></div>
+      <button id="calmClose" onclick="closeCalm()">Cerrar</button>
+    </div>
+  </div>
+
   <script>
     // ---------------- UI state ----------------
     const cards = ['A','K','Q','J','T','9','8','7','6','5','4','3','2'];
@@ -132,10 +192,10 @@ html_code = r"""
     let bbs = 30;
 
     // --------------- LocalStorage keys ----------------
-    const K_HIST  = "poker_edu_hist_v2";   // array of hands (accumulative)
-    const K_STATS = "poker_edu_stats_v2";  // global stats
-    const K_ROUND = "poker_edu_round_v2";  // current round
-    const K_RSUM  = "poker_edu_rsum_v2";   // per-round summary
+    const K_HIST  = "poker_edu_hist_v3";
+    const K_STATS = "poker_edu_stats_v3";
+    const K_ROUND = "poker_edu_round_v3";
+    const K_RSUM  = "poker_edu_rsum_v3";
 
     // --------------- Storage helpers ----------------
     function jget(key, fallback){
@@ -161,7 +221,7 @@ html_code = r"""
       return (action === "PUSH" || action === "RAISE") ? "PROACTIVA" : "PREVENTIVA";
     }
 
-    // --------------- Educational + calm messages ----------------
+    // --------------- Calm messages ----------------
     const calmMessages = {
       PROACTIVA: [
         "Respira. Tomaste iniciativa con criterio.",
@@ -186,7 +246,7 @@ html_code = r"""
         "Pequeña iniciativa con disciplina también es control."
       ],
       TILT: [
-        "La rabia baja si respiras: 4 segundos inhala, 6 exhala.",
+        "La rabia baja si respiras: 4 inhala, 6 exhala.",
         "Un mal resultado no invalida una buena decisión.",
         "No te castigues: ajusta y sigue. Una mano a la vez.",
         "Calma: tu estrategia manda, no la emoción."
@@ -209,14 +269,9 @@ html_code = r"""
     }
 
     function motivationalMessage(action, stats){
-      // base message by action
       let msg = (action === "PUSH" || action === "RAISE") ? pick(calmMessages.PROACTIVA) : pick(calmMessages.PREVENTIVA);
-
-      // tilt control by fold streak
-      if(stats.streakFold >= 3){
-        msg = pick(calmMessages.TILT);
-      } else if(stats.total >= 5){
-        // adjust by global tendency
+      if(stats.streakFold >= 3) msg = pick(calmMessages.TILT);
+      else if(stats.total >= 5){
         const ratio = stats.proactive / stats.total;
         if(ratio > 0.65) msg = pick(calmMessages.AGGRESSIVE);
         if(ratio < 0.30) msg = pick(calmMessages.PASSIVE);
@@ -232,12 +287,10 @@ html_code = r"""
       setTimeout(()=>{ box.style.opacity = 0.92; }, 1200);
     }
 
-    // --------------- Decision logic (placeholder / educational) ----------------
-    // Replace this function with your real ranges if needed.
+    // --------------- Decision logic (educational placeholder) ----------------
     function decide(h1, h2, suitedFlag, bb){
       const isPair = (h1 === h2);
       const strongPairs = ['A','K','Q','J','T'];
-
       if(isPair && strongPairs.includes(h1)) return "PUSH";
       if(h1 === 'A' && suitedFlag === true) return "RAISE";
       if(bb <= 10 && h1 === 'A') return "RAISE";
@@ -324,7 +377,6 @@ html_code = r"""
       const rsum = getRoundSummary();
       const rounds = Object.keys(rsum).map(n=>parseInt(n,10)).sort((a,b)=>b-a);
       const body = document.getElementById("rBody");
-
       body.innerHTML = rounds.slice(0, 15).map(r=>{
         const s = rsum[String(r)];
         const pct = s.hands ? Math.round((s.pro / s.hands) * 100) : 0;
@@ -343,7 +395,6 @@ html_code = r"""
       const round = getRound();
       const type = classify(action);
 
-      // update global stats
       const stats = getStats();
       stats.total += 1;
       if(type === "PROACTIVA") stats.proactive += 1;
@@ -355,7 +406,6 @@ html_code = r"""
 
       saveStats(stats);
 
-      // per-round summary
       const rsum = getRoundSummary();
       if(!rsum[String(round)]) rsum[String(round)] = { hands:0, pro:0, prev:0 };
       rsum[String(round)].hands += 1;
@@ -363,17 +413,14 @@ html_code = r"""
       else rsum[String(round)].prev += 1;
       saveRoundSummary(rsum);
 
-      // history
       const hist = getHist();
       hist.unshift({ round, hand, bb, action, type, ts: Date.now() });
       saveHist(hist);
 
-      // UI refresh
       renderEducation();
       renderHistory();
       renderRounds();
 
-      // motivational text
       showMotivation(motivationalMessage(action, stats));
     }
 
@@ -385,14 +432,12 @@ html_code = r"""
       const handTxt = `${h1}${h2}${(h1===h2)?'':(suited?'s':'o')}`;
       const action = decide(h1, h2, suited, bbs);
 
-      // show result
       document.getElementById("res").style.display = "block";
       const dec = document.getElementById("dec");
       dec.innerText = action;
       dec.style.color = (action==="FOLD") ? "#ff4444" : (action==="RAISE" ? "#ffcc00" : "#00ff00");
       document.getElementById("eduHint").innerText = actionHint(action);
 
-      // register
       registerHand(handTxt, bbs, action);
     }
 
@@ -423,7 +468,45 @@ html_code = r"""
       renderEducation();
       renderHistory();
       renderRounds();
-      showMotivation("Historial borrado. Reinicias sin culpa: claridad y calma.");
+      showMotivation("Reinicio limpio. Sin culpa: claridad y calma.");
+    }
+
+    // -------- CALMA 10s (inhala 4 / exhala 6) --------
+    let calmTimer = null;
+    function startCalm10(){
+      const overlay = document.getElementById("calmOverlay");
+      const text = document.getElementById("calmText");
+      const fill = document.getElementById("calmFill");
+
+      overlay.style.display = "flex";
+      fill.style.width = "0%";
+      let t = 0;
+
+      if(calmTimer) clearInterval(calmTimer);
+
+      // 10s total: show instructions by second
+      calmTimer = setInterval(()=>{
+        t += 1;
+        fill.style.width = `${(t/10)*100}%`;
+
+        if(t <= 4){
+          text.innerText = `Inhala… ${5 - t}\nSuelta hombros y mandíbula.`;
+        } else {
+          text.innerText = `Exhala… ${11 - t}\nDeja que baje la rabia.`;
+        }
+
+        if(t >= 10){
+          clearInterval(calmTimer);
+          calmTimer = null;
+          text.innerText = "Listo. Vuelve al plan.\nUna mano a la vez.";
+          setTimeout(()=> closeCalm(), 700);
+        }
+      }, 1000);
+    }
+
+    function closeCalm(){
+      const overlay = document.getElementById("calmOverlay");
+      overlay.style.display = "none";
     }
 
     // Bind BB buttons
@@ -446,4 +529,4 @@ html_code = r"""
 </html>
 """
 
-components.html(html_code, height=1300, scrolling=True)
+components.html(html_code, height=1350, scrolling=True)
