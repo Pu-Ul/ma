@@ -1,11 +1,4 @@
 
-¡Entendido! Aquí está el código completo listo para copiar:
-
-```python
-import streamlit as st
-import streamlit.components.v1 as components
-
-st.set_page_config(page_title="Poker Advisor Pro", layout="centered", initial_sidebar_state="collapsed")
 
 html_code = """
 <!DOCTYPE html>
