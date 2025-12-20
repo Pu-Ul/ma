@@ -633,3 +633,4 @@ if st.session_state.get("show_hist",False):
         st.markdown("</div>", unsafe_allow_html=True)
     else:
         st.markdown("<div class='card small'>Historial vacío.</div>", unsafe_allow_html=True)
+
