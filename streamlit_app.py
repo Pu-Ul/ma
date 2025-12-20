@@ -1,7 +1,7 @@
 import streamlit as st, itertools, json, os, random, math
-from datetime import datetime
+from datetime import datetime st.set_page_config(page_title="Hold'em Pocket Coach ✅", layout="centered", initial_sidebar_state="collapsed")
 
-st.set_page_config(page_title="Hold'em Pocket Coach", layout="centered", initial_sidebar_state="collapsed")
+BUILD_ID = datetime.utcnow().strftime("%Y%m%d-%H%M%S")
 
 st.markdown("""
 <style>
@@ -140,11 +140,6 @@ def hand_key(c1,c2):
     if r1==r2: return hi+lo
     return hi+lo+suited
 
-def pos_group(pos):
-    if pos in ("UTG","MP"): return "early"
-    if pos in ("CO","BTN"): return "late"
-    return "blinds"
-
 def suggest_open_size_bb(stack_bb):
     if stack_bb<=20: return 2.2
     if stack_bb<=40: return 2.4
@@ -170,20 +165,13 @@ def gen_starting_hands():
 ALL_START=None
 
 def range_weight(hero_hand, style, pos, facing):
-    k=hand_key(hero_hand[0],hero_hand[1])
     base=preflop_score([hero_hand[0],hero_hand[1]])
-    if style=="tight":
-        thresh=70
-    elif style=="loose":
-        thresh=50
-    else:
-        thresh=60
-    if facing=="none":
-        adj=0
-    elif facing=="open":
-        adj=6
-    else:
-        adj=12
+    if style=="tight": thresh=70
+    elif style=="loose": thresh=50
+    else: thresh=60
+    if facing=="none": adj=0
+    elif facing=="open": adj=6
+    else: adj=12
     if pos in ("UTG","MP"): adj+=4
     if pos in ("CO","BTN"): adj-=2
     thresh+=adj
@@ -235,7 +223,7 @@ def equity_mc(hero, board, opps, iters, opp_style, opp_pos, opp_facing):
         elif hr==besto: t+=1
     return (w+0.5*t)/iters
 
-def postflop_advice(equity, req, call_bb, texture_hint, position_adv):
+def postflop_advice(equity, req, call_bb, texture_hint, _position_adv):
     m=0.05
     if equity is None: return ("Datos incompletos","Completa cartas para calcular.","Equity: probabilidad aproximada de ganar si vas a showdown.")
     if call_bb<=0:
@@ -245,7 +233,7 @@ def postflop_advice(equity, req, call_bb, texture_hint, position_adv):
     if equity>=req+m:
         return ("Call razonable","Estás por encima del umbral. Si la textura es peligrosa, prefiere tamaños que controlen el riesgo.","Textura: cómo el board conecta proyectos y manos fuertes.")
     if equity>=req-m:
-        return ("Zona fina","Estás cerca del umbral. Si enfrentas apuesta grande y poca posición, foldear es coherente.","Disciplina: evitar pagos negativos protege tu stack.")
+        return ("Zona fina","Estás cerca del umbral. Si enfrentas apuesta grande, foldear es coherente.","Disciplina: evitar pagos negativos protege tu stack.")
     return ("Fold frecuente","Tu equity no cubre pot odds. Esperar spots mejores protege tu BB neto.","Selección de spot: elegir escenarios con ventaja.")
 
 def texture(board):
@@ -259,8 +247,7 @@ def texture(board):
     if suited>=3: wet=True
     if (len(board)>=3 and min(gaps)<=2): wet=True
     if paired: wet=True
-    if wet: return "Conectada/Peligrosa"
-    return "Seca/Estable"
+    return "Conectada/Peligrosa" if wet else "Seca/Estable"
 
 def glossary(stage):
     if stage=="preflop":
@@ -272,7 +259,6 @@ def glossary(stage):
     return [("Value bet","Apuesta para que te paguen manos peores."),("Bluff","Apuesta para que foldee una mejor."),("Showdown","Revelación final de manos.")]
 
 def calm(): return random.choice(CALM)
-
 def street(stage): return {"preflop":"PREFLOP","flop":"FLOP","turn":"TURN","river":"RIVER"}[stage]
 
 def reset_hand():
@@ -299,6 +285,18 @@ store=load_store()
 sess=store.get("session",{"played":0,"saved":0,"bb_net":0.0})
 hands=store.get("hands",[])
 
+st.markdown(f"<div class='card small'><b>✅ BUILD:</b> {BUILD_ID} &nbsp; <span class='badge'>Si no ves esto, Streamlit NO está leyendo este archivo</span></div>", unsafe_allow_html=True)
+
+cA,cB=st.columns(2,gap="small")
+with cA:
+    if st.button("🔁 Forzar recarga", use_container_width=True):
+        st.session_state["_force"]=datetime.utcnow().isoformat()
+        reset_hand()
+        st.cache_data.clear()
+        st.rerun()
+with cB:
+    st.markdown(f"<div class='card small'>🧭 {calm()}</div>", unsafe_allow_html=True)
+
 st.markdown(f"""
 <div class="card">
   <div><span class="badge">Hold'em</span><span class="badge">Móvil</span><span class="badge">Sin scroll</span><span class="badge">Educativo</span></div>
@@ -306,8 +304,6 @@ st.markdown(f"""
   <div class="small" style="margin-top:.18rem;"><b>Mano:</b> {pretty(st.session_state.hero) or "—"} &nbsp; | &nbsp; <b>Board:</b> {pretty(st.session_state.board) or "—"}</div>
 </div>
 """, unsafe_allow_html=True)
-
-st.markdown(f"<div class='card small'>🧭 {calm()}</div>", unsafe_allow_html=True)
 
 top1,top2,top3=st.columns(3,gap="small")
 with top1:
@@ -326,6 +322,8 @@ with top2:
             "callBB":float(st.session_state.call_bb),
             "villains":int(st.session_state.villains),
             "v_style":st.session_state.v_style,
+            "v_pos":st.session_state.v_pos,
+            "v_facing":st.session_state.v_facing,
             "facing":st.session_state.facing,
             "facing_size":float(st.session_state.facing_size),
             "equity":None if st.session_state.last_eq is None else round(st.session_state.last_eq*100,1),
@@ -358,18 +356,6 @@ st.markdown("</div>", unsafe_allow_html=True)
 opts=card_options()
 stage=st.session_state.stage
 
-def stage_nav(prev_stage, next_stage, trim_board=None):
-    x,y=st.columns(2,gap="small")
-    with x:
-        if st.button(f"⬅️ {street(prev_stage)}", use_container_width=True):
-            st.session_state.stage=prev_stage
-            if trim_board is not None: st.session_state.board=st.session_state.board[:trim_board]
-            st.rerun()
-    with y:
-        if st.button(f"➡️ {street(next_stage)}", use_container_width=True):
-            st.session_state.stage=next_stage
-            st.rerun()
-
 def show_kpis(eq, req, outs, tex, made):
     st.markdown("<div class='card'>", unsafe_allow_html=True)
     st.markdown("<div class='kpi'>", unsafe_allow_html=True)
@@ -386,26 +372,6 @@ def show_gloss(stage):
     st.markdown(f"**📘 Mini-glosario ({street(stage).lower()}):**")
     for k,v in glossary(stage): st.markdown(f"- **{k}:** {v}")
     st.markdown("</div>", unsafe_allow_html=True)
-
-def preflop_plan(hero):
-    sc=preflop_score(hero)
-    act,reason,term=preflop_action(sc)
-    k=hand_key(hero[0],hero[1])
-    open_size=suggest_open_size_bb(st.session_state.stack_bb)
-    facing=st.session_state.facing
-    facing_size=st.session_state.facing_size
-    pos=st.session_state.pos
-    if facing=="none":
-        size_note=f"Tamaño sugerido de open: ~{open_size:.1f} BB."
-        line="Si nadie abrió antes, puedes abrir con tamaño estándar y jugar en posición con disciplina."
-    elif facing=="open":
-        three=suggest_3bet_size_bb(pos, facing_size)
-        size_note=f"Si decides 3-bet: ~{three:.1f} BB (ajusta por posición)."
-        line="Si hay subida antes, tu decisión depende de tu fuerza, posición y tamaño. A veces call, a veces 3-bet, a veces fold."
-    else:
-        size_note="Enfrentando 3-bet, ajusta: manos fuertes continúan; marginales suelen foldear."
-        line="Ante 3-bet, el rango se estrecha. Evita pagar con manos que no soportan presión postflop."
-    return sc,k,act,reason,term,size_note,line
 
 def preflop_action(sc):
     pos=st.session_state.pos
@@ -433,6 +399,26 @@ def preflop_action(sc):
         if late and stack>=35: return ("Open ocasional","Mano especulativa; prefiere posición tardía y control.","Control del bote: reducir varianza con manos medias.")
         return ("Fold frecuente","Mano marginal sin ventaja.","Fold equity: valor cuando el rival foldea ante presión.")
     return ("Fold","Mano débil. Espera un spot mejor.","Spot: situación favorable para actuar.")
+
+def preflop_plan(hero):
+    sc=preflop_score(hero)
+    act,reason,term=preflop_action(sc)
+    k=hand_key(hero[0],hero[1])
+    open_size=suggest_open_size_bb(st.session_state.stack_bb)
+    facing=st.session_state.facing
+    facing_size=st.session_state.facing_size
+    pos=st.session_state.pos
+    if facing=="none":
+        size_note=f"Tamaño sugerido de open: ~{open_size:.1f} BB."
+        line="Si nadie abrió antes, puedes abrir con tamaño estándar y jugar con disciplina."
+    elif facing=="open":
+        three=suggest_3bet_size_bb(pos, facing_size)
+        size_note=f"Si decides 3-bet: ~{three:.1f} BB (ajusta por posición)."
+        line="Si hubo open, tu decisión depende de fuerza, posición y tamaño. A veces call, a veces 3-bet, a veces fold."
+    else:
+        size_note="Enfrentando 3-bet, manos fuertes continúan; marginales suelen foldear."
+        line="Ante 3-bet, el rango se estrecha. Evita pagar con manos que no soportan presión postflop."
+    return sc,k,act,reason,term,size_note,line
 
 if stage=="preflop":
     st.markdown("<div class='card'>", unsafe_allow_html=True)
