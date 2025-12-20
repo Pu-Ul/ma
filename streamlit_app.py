@@ -530,4 +530,3 @@ html_code = r"""
 """
 
 components.html(html_code, height=1350, scrolling=True)
-
