@@ -1,652 +1,785 @@
-html_code = """
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { 
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
-      color: #fff;
-      padding: 15px;
-      min-height: 100vh;
-    }
-    .container { max-width: 420px; margin: 0 auto; }
-    .header { text-align: center; margin-bottom: 20px; }
-    .header h1 { font-size: 1.8rem; margin-bottom: 5px; }
-    .header p { color: #a0d8f1; font-size: 0.9rem; }
-    
-    .card { background: rgba(0,0,0,0.4); backdrop-filter: blur(10px); border-radius: 12px; padding: 15px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.1); }
-    
-    .input-group { margin-bottom: 12px; }
-    .input-group label { display: block; font-size: 0.85rem; color: #a0d8f1; margin-bottom: 6px; font-weight: 600; }
-    
-    .card-select-container { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    select, input { 
-      width: 100%; 
-      padding: 14px; 
-      background: #1a3a4a; 
-      border: 2px solid #2c5364; 
-      border-radius: 8px; 
-      color: #fff; 
-      font-size: 1rem;
-      font-weight: bold;
-    }
-    select:focus, input:focus { outline: none; border-color: #4a90e2; }
-    
-    .flop-container, .single-card { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-    .single-card { grid-template-columns: 1fr; }
-    
-    .btn { 
-      width: 100%; 
-      padding: 16px; 
-      font-size: 1.05rem; 
-      font-weight: bold; 
-      border: none; 
-      border-radius: 10px; 
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .btn:active { transform: scale(0.98); }
-    .btn-primary { background: #4a90e2; color: #fff; }
-    .btn-primary:hover { background: #357abd; }
-    .btn-primary:disabled { background: #555; cursor: not-allowed; opacity: 0.5; }
-    .btn-success { background: #27ae60; color: #fff; }
-    .btn-success:hover { background: #229954; }
-    .btn-danger { background: #e74c3c; color: #fff; }
-    .btn-danger:hover { background: #c0392b; }
-    .btn-secondary { background: #555; color: #fff; }
-    .btn-secondary:hover { background: #444; }
-    
-    .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
-    
-    .hand-display { text-align: center; padding: 15px; }
-    .hand-cards { font-size: 2.5rem; font-weight: bold; letter-spacing: 8px; margin-bottom: 8px; }
-    .hand-name { color: #4a90e2; font-size: 1.1rem; margin-bottom: 5px; }
-    .hand-meta { color: #888; font-size: 0.9rem; }
-    
-    .strength-bar { margin: 15px 0; }
-    .strength-label { display: flex; justify-content: space-between; margin-bottom: 8px; }
-    .strength-label span:last-child { font-size: 1.4rem; font-weight: bold; color: #f39c12; }
-    .bar-bg { width: 100%; height: 8px; background: #333; border-radius: 4px; overflow: hidden; }
-    .bar-fill { height: 100%; background: linear-gradient(90deg, #e74c3c 0%, #f39c12 50%, #27ae60 100%); transition: width 0.3s; }
-    
-    .advice-box { 
-      background: rgba(74, 144, 226, 0.15); 
-      border-left: 4px solid #4a90e2; 
-      padding: 15px; 
-      border-radius: 8px; 
-      margin: 15px 0;
-    }
-    .advice-action { font-size: 1.3rem; font-weight: bold; color: #f39c12; margin-bottom: 8px; }
-    .advice-reason { font-size: 0.95rem; line-height: 1.5; margin-bottom: 10px; }
-    .advice-term { font-size: 0.85rem; color: #4a90e2; font-style: italic; }
-    
-    .board-display { text-align: center; margin: 15px 0; }
-    .board-label { font-size: 0.85rem; color: #888; margin-bottom: 8px; }
-    .board-cards { font-size: 1.8rem; font-weight: bold; letter-spacing: 6px; }
-    
-    .history { max-height: 300px; overflow-y: auto; }
-    .history-title { font-size: 1rem; font-weight: bold; margin-bottom: 12px; color: #f39c12; }
-    .history-item { 
-      background: rgba(0,0,0,0.3); 
-      padding: 12px; 
-      border-radius: 8px; 
-      margin-bottom: 8px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .history-hand { font-weight: bold; font-size: 1rem; }
-    .history-position { color: #888; font-size: 0.85rem; margin-left: 8px; }
-    .history-stats { text-align: right; }
-    .history-strength { color: #f39c12; font-weight: bold; }
-    .history-bb { font-size: 0.8rem; color: #888; }
-    
-    .hidden { display: none; }
-    
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
-    ::-webkit-scrollbar-thumb { background: #4a90e2; border-radius: 3px; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1>🎴 Poker Advisor Pro</h1>
-      <p>Asistente Inteligente de Texas Hold'em</p>
-    </div>
+Aquí tienes una versión **realmente usable en celular**, **discreta**, **sin scroll** (pantallas por pasos), **educativa** (te enseña términos en cada calle), te acompaña **de preflop → flop → turn → river**, calcula **equity (probabilidad) por Monte Carlo**, te da **consejos condicionales** (no “sentencias”), toma en cuenta **stack en BB** + **pot y costo a pagar en BB** (para *pot odds*), y guarda **historial acumulativo** en un archivo JSON (ideal para GitHub).
 
-    <!-- PANTALLA INICIAL -->
-    <div id="screenStart">
-      <div class="card">
-        <div class="input-group">
-          <label>🂡 Tu Mano (2 cartas)</label>
-          <div class="card-select-container">
-            <select id="card1">
-              <option value="">Carta 1</option>
-            </select>
-            <select id="card2">
-              <option value="">Carta 2</option>
-            </select>
-          </div>
-        </div>
-      </div>
+> ✅ Copia/pega tal cual en GitHub como `app.py` y `requirements.txt`.
 
-      <div class="card">
-        <div class="card-select-container">
-          <div class="input-group">
-            <label>📍 Posición</label>
-            <select id="position">
-              <option value="">Selecciona</option>
-              <option value="UTG">UTG (Early)</option>
-              <option value="MP">MP (Middle)</option>
-              <option value="CO">CO (Cutoff)</option>
-              <option value="BTN">BTN (Button)</option>
-              <option value="SB">SB (Small Blind)</option>
-              <option value="BB">BB (Big Blind)</option>
-            </select>
-          </div>
-          <div class="input-group">
-            <label>💰 Stack (BB)</label>
-            <input type="number" id="stackBB" placeholder="100" min="1">
-          </div>
-        </div>
-      </div>
+---
 
-      <button class="btn btn-primary" onclick="analyzePreflop()">🎯 Analizar Preflop</button>
-    </div>
+```python
+# app.py
+# Streamlit Texas Hold'em Advisor (mobile-first, step-by-step, no-scroll UI)
+# - Preflop → Flop → Turn → River
+# - Monte Carlo equity (vs 1 oponente random por defecto)
+# - Pot odds (pot y costo a pagar en BB)
+# - Consejos condicionales (no absolutos)
+# - Mini-glosario educativo por calle
+# - Historial acumulativo (data/history.json)
 
-    <!-- PANTALLA PREFLOP -->
-    <div id="screenPreflop" class="hidden">
-      <div class="card">
-        <div class="hand-display">
-          <div class="hand-cards" id="displayHand"></div>
-          <div class="hand-name" id="displayHandName"></div>
-          <div class="hand-meta" id="displayMeta"></div>
-        </div>
-        
-        <div class="strength-bar">
-          <div class="strength-label">
-            <span>Fuerza de Mano</span>
-            <span id="strengthValue"></span>
-          </div>
-          <div class="bar-bg">
-            <div class="bar-fill" id="strengthBar"></div>
-          </div>
-        </div>
+import itertools
+import json
+import os
+import random
+from datetime import datetime
 
-        <div class="advice-box">
-          <div class="advice-action" id="adviceAction"></div>
-          <div class="advice-reason" id="adviceReason"></div>
-          <div class="advice-term">📚 <span id="adviceTerm"></span></div>
-        </div>
-      </div>
+import streamlit as st
 
-      <div class="btn-grid">
-        <button class="btn btn-success" onclick="goToFlop()">Ver Flop →</button>
-        <button class="btn btn-danger" onclick="foldHand()">Fold / Nueva</button>
-      </div>
-    </div>
+# ---------------------------
+# Page config + Mobile CSS
+# ---------------------------
+st.set_page_config(page_title="Hold'em Pocket Coach", layout="centered", initial_sidebar_state="collapsed")
 
-    <!-- PANTALLA FLOP -->
-    <div id="screenFlop" class="hidden">
-      <div class="card">
-        <div class="board-display">
-          <div class="board-label">Tu mano: <span id="flopYourHand"></span></div>
-          <div class="board-label" style="margin-top: 10px; font-size: 1.1rem; color: #f39c12;">FLOP</div>
-        </div>
-        
-        <div class="input-group">
-          <label>🃏 Cartas del Flop</label>
-          <div class="flop-container">
-            <select id="flopC1"><option value="">C1</option></select>
-            <select id="flopC2"><option value="">C2</option></select>
-            <select id="flopC3"><option value="">C3</option></select>
-          </div>
-        </div>
+MOBILE_CSS = """
+<style>
+/* Reduce padding and make it feel like an app */
+.block-container { padding-top: .6rem; padding-bottom: .6rem; max-width: 520px; }
+header, footer { visibility: hidden; height: 0px; }
+[data-testid="stToolbar"] { visibility: hidden; height: 0px; }
+[data-testid="stDecoration"] { visibility: hidden; height: 0px; }
 
-        <div class="advice-box">
-          <div class="advice-reason">Ingresa las 3 cartas del flop para analizar tu situación.</div>
-          <div class="advice-term">📚 Textura: Cómo las cartas comunitarias se conectan entre sí.</div>
-        </div>
-      </div>
+/* Try to avoid scroll: keep widgets compact */
+div.stButton > button { width: 100%; padding: 0.7rem 0.8rem; border-radius: 14px; }
+div.stMetric { padding: 0.2rem 0.3rem; }
 
-      <div class="btn-grid">
-        <button class="btn btn-primary" onclick="analyzeFlop()">🔍 Analizar Flop</button>
-        <button class="btn btn-danger" onclick="foldHand()">Fold / Nueva</button>
-      </div>
-    </div>
+/* Compact select boxes */
+div[data-baseweb="select"] > div { border-radius: 12px; }
+input, textarea { border-radius: 12px !important; }
 
-    <!-- PANTALLA POST-FLOP -->
-    <div id="screenPostFlop" class="hidden">
-      <div class="card">
-        <div class="board-display">
-          <div class="board-label">Mano: <span id="postFlopHand"></span></div>
-          <div class="board-label">Flop: <span id="postFlopBoard" class="board-cards"></span></div>
-        </div>
+/* Make dataframe smaller */
+[data-testid="stDataFrame"] { border-radius: 14px; overflow: hidden; }
 
-        <div class="advice-box">
-          <div class="advice-action" id="flopAdviceAction"></div>
-          <div class="advice-reason" id="flopAdviceReason"></div>
-          <div class="advice-term">📚 <span id="flopAdviceTerm"></span></div>
-        </div>
-      </div>
-
-      <div class="btn-grid">
-        <button class="btn btn-success" onclick="goToTurn()">Ver Turn →</button>
-        <button class="btn btn-danger" onclick="foldHand()">Fold / Nueva</button>
-      </div>
-    </div>
-
-    <!-- PANTALLA TURN -->
-    <div id="screenTurn" class="hidden">
-      <div class="card">
-        <div class="board-display">
-          <div class="board-label">Mano: <span id="turnYourHand"></span></div>
-          <div class="board-label">Flop: <span id="turnFlopBoard"></span></div>
-          <div class="board-label" style="margin-top: 10px; font-size: 1.1rem; color: #f39c12;">TURN</div>
-        </div>
-        
-        <div class="input-group">
-          <label>🎴 Carta del Turn</label>
-          <div class="single-card">
-            <select id="turnCard"><option value="">Selecciona</option></select>
-          </div>
-        </div>
-
-        <div class="advice-box">
-          <div class="advice-reason">La cuarta carta cambia dinámicas. Evalúa si mejoraste o hay nuevos peligros.</div>
-          <div class="advice-term">📚 Outs: Cartas que mejorarían tu mano a ganadora.</div>
-        </div>
-      </div>
-
-      <div class="btn-grid">
-        <button class="btn btn-primary" onclick="analyzeTurn()">🔍 Analizar Turn</button>
-        <button class="btn btn-danger" onclick="foldHand()">Fold / Nueva</button>
-      </div>
-    </div>
-
-    <!-- PANTALLA POST-TURN -->
-    <div id="screenPostTurn" class="hidden">
-      <div class="card">
-        <div class="board-display">
-          <div class="board-label">Mano: <span id="postTurnHand"></span></div>
-          <div class="board-label">Board: <span id="postTurnBoard" class="board-cards"></span></div>
-        </div>
-
-        <div class="advice-box">
-          <div class="advice-action">DECISIÓN CRÍTICA</div>
-          <div class="advice-reason">Con 4 cartas visibles, tienes información sólida. El bote crece, cada decisión pesa más.</div>
-          <div class="advice-term">📚 Pot Odds: Relación entre costo de call y tamaño del bote.</div>
-        </div>
-      </div>
-
-      <div class="btn-grid">
-        <button class="btn btn-success" onclick="goToRiver()">Ver River →</button>
-        <button class="btn btn-danger" onclick="foldHand()">Fold / Nueva</button>
-      </div>
-    </div>
-
-    <!-- PANTALLA RIVER -->
-    <div id="screenRiver" class="hidden">
-      <div class="card">
-        <div class="board-display">
-          <div class="board-label">Mano: <span id="riverYourHand"></span></div>
-          <div class="board-label">Board: <span id="riverTurnBoard"></span></div>
-          <div class="board-label" style="margin-top: 10px; font-size: 1.1rem; color: #f39c12;">RIVER</div>
-        </div>
-        
-        <div class="input-group">
-          <label>🎴 Carta del River</label>
-          <div class="single-card">
-            <select id="riverCard"><option value="">Selecciona</option></select>
-          </div>
-        </div>
-
-        <div class="advice-box">
-          <div class="advice-reason">Última carta. Todas las cartas están a la vista. Momento de decisión final.</div>
-          <div class="advice-term">📚 Value Bet: Apuesta buscando que te paguen manos peores.</div>
-        </div>
-      </div>
-
-      <div class="btn-grid">
-        <button class="btn btn-primary" onclick="analyzeRiver()">🏁 Análisis Final</button>
-        <button class="btn btn-danger" onclick="foldHand()">Fold / Nueva</button>
-      </div>
-    </div>
-
-    <!-- PANTALLA FINAL RIVER -->
-    <div id="screenFinalRiver" class="hidden">
-      <div class="card">
-        <div class="board-display">
-          <div class="board-label">Mano: <span id="finalHand"></span></div>
-          <div class="board-label">Board completo: <span id="finalBoard" class="board-cards"></span></div>
-        </div>
-
-        <div class="advice-box">
-          <div class="advice-action">SHOWDOWN</div>
-          <div class="advice-reason">Decisión final. Si llegaste hasta aquí con fuerza, confía en tu lectura. Evalúa el tamaño del bote vs tu mano.</div>
-          <div class="advice-term">📚 Showdown: Momento donde se revelan las manos.</div>
-        </div>
-      </div>
-
-      <button class="btn btn-success" style="margin-bottom: 10px;" onclick="saveAndNew()">💾 Guardar Mano</button>
-      <button class="btn btn-secondary" onclick="newHand()">🔄 Nueva Mano</button>
-    </div>
-
-    <!-- HISTORIAL -->
-    <div id="historySection" class="card hidden">
-      <div class="history-title">📊 Historial (últimas 10 manos)</div>
-      <div class="history" id="historyList"></div>
-      <button class="btn btn-secondary" style="margin-top: 10px; font-size: 0.9rem; padding: 12px;" onclick="clearHistory()">🗑️ Borrar Historial</button>
-    </div>
-  </div>
-
-  <script>
-    const ranks = ['2','3','4','5','6','7','8','9','T','J','Q','K','A'];
-    const suits = ['♠','♥','♦','♣'];
-    
-    let gameData = {
-      hand: { c1: '', c2: '' },
-      position: '',
-      bb: 0,
-      flop: { c1: '', c2: '', c3: '' },
-      turn: '',
-      river: '',
-      strength: 0
-    };
-
-    function initCardSelects() {
-      const selects = ['card1', 'card2', 'flopC1', 'flopC2', 'flopC3', 'turnCard', 'riverCard'];
-      selects.forEach(id => {
-        const sel = document.getElementById(id);
-        ranks.forEach(r => {
-          suits.forEach(s => {
-            const opt = document.createElement('option');
-            opt.value = r + s;
-            opt.textContent = r + s;
-            sel.appendChild(opt);
-          });
-        });
-      });
-    }
-
-    function showScreen(screenId) {
-      document.querySelectorAll('[id^="screen"]').forEach(s => s.classList.add('hidden'));
-      document.getElementById(screenId).classList.remove('hidden');
-    }
-
-    function calculateStrength(c1, c2) {
-      const r1 = c1[0], r2 = c2[0];
-      const suited = c1[1] === c2[1];
-      const isPair = r1 === r2;
-      
-      const v1 = ranks.indexOf(r1);
-      const v2 = ranks.indexOf(r2);
-      
-      let str = 0;
-      
-      if (isPair) {
-        str = 60 + (v1 * 3);
-      } else {
-        const high = Math.max(v1, v2);
-        const gap = Math.abs(v1 - v2);
-        str = 30 + (high * 2) - (gap * 2);
-        if (suited) str += 5;
-      }
-      
-      return Math.min(95, Math.max(15, str));
-    }
-
-    function getHandName(c1, c2) {
-      const r1 = c1[0], r2 = c2[0];
-      const suited = c1[1] === c2[1] ? 's' : 'o';
-      
-      if (r1 === r2) return `Pareja de ${r1}${r1}`;
-      
-      const v1 = ranks.indexOf(r1);
-      const v2 = ranks.indexOf(r2);
-      const high = v1 > v2 ? r1 : r2;
-      const low = v1 < v2 ? r1 : r2;
-      
-      return `${high}${low}${suited}`;
-    }
-
-    function getAdvice(strength, position) {
-      const early = ['UTG', 'MP'].includes(position);
-      const late = ['CO', 'BTN'].includes(position);
-      
-      if (strength >= 75) {
-        return {
-          action: 'RAISE',
-          reason: 'Mano premium. Tu rango es fuerte desde cualquier posición. Construye el bote.',
-          term: '3-Bet: Subir después de que alguien ya subió (re-raise).'
-        };
-      } else if (strength >= 55) {
-        if (late) {
-          return {
-            action: 'RAISE',
-            reason: 'Mano sólida en posición tardía. Aprovecha tu ventaja posicional para controlar la mano.',
-            term: 'Posición: Actuar después te da información valiosa sobre tus rivales.'
-          };
-        } else {
-          return {
-            action: 'CALL o RAISE',
-            reason: 'Mano jugable pero con cautela en posición temprana. Observa la acción.',
-            term: 'Rango: Conjunto de manos que juegas en cada situación específica.'
-          };
-        }
-      } else if (strength >= 35) {
-        if (late && gameData.bb <= 20) {
-          return {
-            action: 'CALL (condicional)',
-            reason: 'Mano especulativa. En posición tardía y con stack adecuado puedes ver flop barato.',
-            term: 'Implied Odds: Potencial de ganar mucho si conectas tu mano.'
-          };
-        } else {
-          return {
-            action: 'FOLD',
-            reason: 'Mano marginal. Protege tus ciegas para mejores oportunidades.',
-            term: 'Spot: Situación favorable para aplicar una jugada específica.'
-          };
-        }
-      } else {
-        return {
-          action: 'FOLD',
-          reason: 'Mano débil. La paciencia y disciplina son rentables a largo plazo.',
-          term: 'Fold Equity: Valor generado al hacer que rivales abandonen la mano.'
-        };
-      }
-    }
-
-    function analyzePreflop() {
-      const c1 = document.getElementById('card1').value;
-      const c2 = document.getElementById('card2').value;
-      const pos = document.getElementById('position').value;
-      const bb = parseInt(document.getElementById('stackBB').value);
-      
-      if (!c1 || !c2 || !pos || !bb) {
-        alert('Por favor completa todos los campos');
-        return;
-      }
-      
-      gameData.hand = { c1, c2 };
-      gameData.position = pos;
-      gameData.bb = bb;
-      gameData.strength = calculateStrength(c1, c2);
-      
-      const advice = getAdvice(gameData.strength, pos);
-      
-      document.getElementById('displayHand').textContent = `${c1} ${c2}`;
-      document.getElementById('displayHandName').textContent = getHandName(c1, c2);
-      document.getElementById('displayMeta').textContent = `${pos} • ${bb} BB`;
-      document.getElementById('strengthValue').textContent = `${gameData.strength}%`;
-      document.getElementById('strengthBar').style.width = `${gameData.strength}%`;
-      document.getElementById('adviceAction').textContent = `Recomendación: ${advice.action}`;
-      document.getElementById('adviceReason').textContent = advice.reason;
-      document.getElementById('adviceTerm').textContent = advice.term;
-      
-      showScreen('screenPreflop');
-    }
-
-    function goToFlop() {
-      document.getElementById('flopYourHand').textContent = `${gameData.hand.c1} ${gameData.hand.c2}`;
-      showScreen('screenFlop');
-    }
-
-    function analyzeFlop() {
-      const c1 = document.getElementById('flopC1').value;
-      const c2 = document.getElementById('flopC2').value;
-      const c3 = document.getElementById('flopC3').value;
-      
-      if (!c1 || !c2 || !c3) {
-        alert('Selecciona las 3 cartas del flop');
-        return;
-      }
-      
-      gameData.flop = { c1, c2, c3 };
-      
-      document.getElementById('postFlopHand').textContent = `${gameData.hand.c1} ${gameData.hand.c2}`;
-      document.getElementById('postFlopBoard').textContent = `${c1} ${c2} ${c3}`;
-      document.getElementById('flopAdviceAction').textContent = 'C-BET o CHECK';
-      document.getElementById('flopAdviceReason').textContent = 'Si fuiste el agresor preflop, considera apostar por continuación. Si no conectaste pero tienes posición, puedes controlar el bote con check.';
-      document.getElementById('flopAdviceTerm').textContent = 'C-Bet: Apuesta de continuación tras ser agresor preflop.';
-      
-      showScreen('screenPostFlop');
-    }
-
-    function goToTurn() {
-      document.getElementById('turnYourHand').textContent = `${gameData.hand.c1} ${gameData.hand.c2}`;
-      document.getElementById('turnFlopBoard').textContent = `${gameData.flop.c1} ${gameData.flop.c2} ${gameData.flop.c3}`;
-      showScreen('screenTurn');
-    }
-
-    function analyzeTurn() {
-      const turn = document.getElementById('turnCard').value;
-      if (!turn) {
-        alert('Selecciona la carta del turn');
-        return;
-      }
-      
-      gameData.turn = turn;
-      
-      document.getElementById('postTurnHand').textContent = `${gameData.hand.c1} ${gameData.hand.c2}`;
-      document.getElementById('postTurnBoard').textContent = `${gameData.flop.c1} ${gameData.flop.c2} ${gameData.flop.c3} ${turn}`;
-      
-      showScreen('screenPostTurn');
-    }
-
-    function goToRiver() {
-      document.getElementById('riverYourHand').textContent = `${gameData.hand.c1} ${gameData.hand.c2}`;
-      document.getElementById('riverTurnBoard').textContent = `${gameData.flop.c1} ${gameData.flop.c2} ${gameData.flop.c3} ${gameData.turn}`;
-      showScreen('screenRiver');
-    }
-
-    function analyzeRiver() {
-      const river = document.getElementById('riverCard').value;
-      if (!river) {
-        alert('Selecciona la carta del river');
-        return;
-      }
-      
-      gameData.river = river;
-      
-      document.getElementById('finalHand').textContent = `${gameData.hand.c1} ${gameData.hand.c2}`;
-      document.getElementById('finalBoard').textContent = `${gameData.flop.c1} ${gameData.flop.c2} ${gameData.flop.c3} ${gameData.turn} ${river}`;
-      
-      showScreen('screenFinalRiver');
-    }
-
-    function saveAndNew() {
-      saveToHistory();
-      newHand();
-    }
-
-    function foldHand() {
-      saveToHistory();
-      newHand();
-    }
-
-    function saveToHistory() {
-      let history = JSON.parse(localStorage.getItem('pokerHistory') || '[]');
-      
-      const record = {
-        hand: `${gameData.hand.c1} ${gameData.hand.c2}`,
-        position: gameData.position,
-        bb: gameData.bb,
-        strength: gameData.strength,
-        timestamp: new Date().toLocaleString('es-CO', { 
-          day: '2-digit', 
-          month: '2-digit', 
-          hour: '2-digit', 
-          minute: '2-digit' 
-        })
-      };
-      
-      history.unshift(record);
-      if (history.length > 10) history = history.slice(0, 10);
-      
-      localStorage.setItem('pokerHistory', JSON.stringify(history));
-      updateHistoryDisplay();
-    }
-
-    function updateHistoryDisplay() {
-      const history = JSON.parse(localStorage.getItem('pokerHistory') || '[]');
-      
-      if (history.length > 0) {
-        document.getElementById('historySection').classList.remove('hidden');
-        
-        const html = history.map(h => `
-          <div class="history-item">
-            <div>
-              <span class="history-hand">${h.hand}</span>
-              <span class="history-position">${h.position}</span>
-            </div>
-            <div class="history-stats">
-              <div class="history-strength">${h.strength}%</div>
-              <div class="history-bb">${h.bb} BB</div>
-            </div>
-          </div>
-        `).join('');
-        
-        document.getElementById('historyList').innerHTML = html;
-      }
-    }
-
-    function clearHistory() {
-      if (confirm('¿Borrar todo el historial?')) {
-        localStorage.removeItem('pokerHistory');
-        document.getElementById('historySection').classList.add('hidden');
-      }
-    }
-
-    function newHand() {
-      gameData = {
-        hand: { c1: '', c2: '' },
-        position: '',
-        bb: 0,
-        flop: { c1: '', c2: '', c3: '' },
-        turn: '',
-        river: '',
-        strength: 0
-      };
-      
-      document.getElementById('card1').value = '';
-      document.getElementById('card2').value = '';
-      document.getElementById('position').value = '';
-      document.getElementById('stackBB').value = '';
-      
-      showScreen('screenStart');
-    }
-
-    initCardSelects
-();
-updateHistoryDisplay();
-</script>
-</body>
-</html>
+/* A subtle card look */
+.card {
+  background: rgba(0,0,0,0.04);
+  border: 1px solid rgba(0,0,0,0.08);
+  padding: .7rem .8rem;
+  border-radius: 16px;
+  margin-bottom: .6rem;
+}
+.small { font-size: 0.9rem; opacity: 0.9; }
+.badge {
+  display:inline-block; padding:.12rem .45rem; border-radius: 999px;
+  background: rgba(0,0,0,0.07); border: 1px solid rgba(0,0,0,0.08);
+  font-size:.8rem; margin-right:.25rem;
+}
+hr { margin: .5rem 0; }
+</style>
 """
-components.html(html_code, height=900, scrolling=False)
+st.markdown(MOBILE_CSS, unsafe_allow_html=True)
+
+# ---------------------------
+# Persistence (history)
+# ---------------------------
+DATA_DIR = "data"
+HISTORY_PATH = os.path.join(DATA_DIR, "history.json")
+
+def _ensure_history_file():
+    os.makedirs(DATA_DIR, exist_ok=True)
+    if not os.path.exists(HISTORY_PATH):
+        with open(HISTORY_PATH, "w", encoding="utf-8") as f:
+            json.dump([], f)
+
+def load_history():
+    _ensure_history_file()
+    try:
+        with open(HISTORY_PATH, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return []
+
+def save_history(items):
+    _ensure_history_file()
+    with open(HISTORY_PATH, "w", encoding="utf-8") as f:
+        json.dump(items, f, ensure_ascii=False, indent=2)
+
+# ---------------------------
+# Cards + Evaluator (simple but solid)
+# ---------------------------
+RANKS = "23456789TJQKA"
+SUITS = "shdc"  # spades, hearts, diamonds, clubs
+RANK_TO_VAL = {r: i for i, r in enumerate(RANKS, start=2)}
+
+def card_str(card):
+    # 'As' -> 'A♠'
+    r, s = card[0], card[1]
+    sym = {"s":"♠","h":"♥","d":"♦","c":"♣"}[s]
+    return f"{r}{sym}"
+
+def make_deck():
+    return [r+s for r in RANKS for s in SUITS]
+
+def parse_selected(sel):
+    # sel is like "A♠" or "As" depending on option; we store canonical "As"
+    # We build options as canonical already, so just return sel
+    return sel
+
+def is_valid_unique(cards):
+    c = [x for x in cards if x]
+    return len(c) == len(set(c))
+
+def five_card_rank(cards5):
+    # returns a tuple that can be compared: (category, tiebreakers...)
+    # categories: 8 straight-flush, 7 quads, 6 full house, 5 flush, 4 straight, 3 trips, 2 two-pair, 1 pair, 0 high
+    ranks = sorted([RANK_TO_VAL[c[0]] for c in cards5], reverse=True)
+    suits = [c[1] for c in cards5]
+    unique = sorted(set(ranks), reverse=True)
+    counts = sorted(((ranks.count(v), v) for v in set(ranks)), reverse=True)  # (count, value)
+    is_flush = len(set(suits)) == 1
+
+    # straight (handle wheel A-5)
+    def straight_high(vals):
+        v = sorted(set(vals), reverse=True)
+        if len(v) < 5:
+            return None
+        # wheel
+        if set([14,5,4,3,2]).issubset(set(vals)):
+            return 5
+        for i in range(len(v)-4):
+            seq = v[i:i+5]
+            if seq[0]-seq[4] == 4 and len(seq) == 5:
+                return seq[0]
+        return None
+
+    sh = straight_high(ranks)
+
+    if is_flush and sh:
+        return (8, sh, ranks)
+    if counts[0][0] == 4:
+        quad = counts[0][1]
+        kicker = max([v for v in ranks if v != quad])
+        return (7, quad, kicker)
+    if counts[0][0] == 3 and counts[1][0] == 2:
+        trips = counts[0][1]
+        pair = counts[1][1]
+        return (6, trips, pair)
+    if is_flush:
+        return (5, ranks)
+    if sh:
+        return (4, sh, ranks)
+    if counts[0][0] == 3:
+        trips = counts[0][1]
+        kickers = sorted([v for v in ranks if v != trips], reverse=True)
+        return (3, trips, kickers)
+    if counts[0][0] == 2 and counts[1][0] == 2:
+        pair_hi = max(counts[0][1], counts[1][1])
+        pair_lo = min(counts[0][1], counts[1][1])
+        kicker = max([v for v in ranks if v not in (pair_hi, pair_lo)])
+        return (2, pair_hi, pair_lo, kicker)
+    if counts[0][0] == 2:
+        pair = counts[0][1]
+        kickers = sorted([v for v in ranks if v != pair], reverse=True)
+        return (1, pair, kickers)
+    return (0, ranks)
+
+def best_hand_rank(cards7):
+    best = None
+    best5 = None
+    for comb in itertools.combinations(cards7, 5):
+        r = five_card_rank(list(comb))
+        if best is None or r > best:
+            best = r
+            best5 = comb
+    return best, best5
+
+def hand_category_name(rank_tuple):
+    cat = rank_tuple[0]
+    return {
+        8: "Escalera de color",
+        7: "Póker (4 iguales)",
+        6: "Full house",
+        5: "Color (flush)",
+        4: "Escalera (straight)",
+        3: "Trío",
+        2: "Doble pareja",
+        1: "Pareja",
+        0: "Carta alta",
+    }[cat]
+
+# ---------------------------
+# Equity (Monte Carlo) + Outs
+# ---------------------------
+def monte_carlo_equity(hero2, board, n_opponents=1, iters=4500, seed=None):
+    if seed is not None:
+        random.seed(seed)
+
+    deck = make_deck()
+    used = set([c for c in hero2 + board if c])
+    deck = [c for c in deck if c not in used]
+
+    need_board = 5 - len(board)
+    if need_board < 0:
+        return None
+
+    wins = ties = total = 0
+    # Reduce iters on slower devices if needed
+    iters = max(800, min(iters, 12000))
+
+    for _ in range(iters):
+        d = deck[:]
+        random.shuffle(d)
+
+        # deal opponents
+        opp_hands = []
+        idx = 0
+        for _k in range(n_opponents):
+            opp_hands.append([d[idx], d[idx+1]])
+            idx += 2
+
+        # complete board
+        runout = board[:] + d[idx:idx+need_board]
+        idx += need_board
+
+        hero_rank, _ = best_hand_rank(hero2 + runout)
+
+        opp_ranks = []
+        for oh in opp_hands:
+            r, _ = best_hand_rank(oh + runout)
+            opp_ranks.append(r)
+
+        best_opp = max(opp_ranks)
+        total += 1
+        if hero_rank > best_opp:
+            wins += 1
+        elif hero_rank == best_opp:
+            # tie only if hero equals the top opponent (approx tie handling)
+            # if multiple opponents tie, still counts as tie
+            ties += 1
+
+    equity = (wins + ties * 0.5) / total
+    return equity
+
+def outs_improvement_count(hero2, board):
+    # Counts how many remaining single cards improve HERO's category (not vs opponent).
+    # Works for flop (2 cards to come) and turn (1 card to come) as a learning tool.
+    used = set(hero2 + board)
+    deck = [c for c in make_deck() if c not in used]
+
+    current_rank, _ = best_hand_rank(hero2 + board)
+    current_cat = current_rank[0]
+
+    # If already river (5 board), no outs
+    if len(board) >= 5:
+        return 0
+
+    improve = 0
+    # We measure immediate improvement with ONE card (next street).
+    for c in deck:
+        r, _ = best_hand_rank(hero2 + (board + [c]))
+        if r[0] > current_cat:
+            improve += 1
+    return improve
+
+# ---------------------------
+# Preflop strength heuristic (educational)
+# ---------------------------
+def preflop_score(hero2):
+    r1, r2 = hero2[0][0], hero2[1][0]
+    s1, s2 = hero2[0][1], hero2[1][1]
+    v1, v2 = RANK_TO_VAL[r1], RANK_TO_VAL[r2]
+    suited = (s1 == s2)
+    pair = (r1 == r2)
+    high = max(v1, v2)
+    low = min(v1, v2)
+    gap = high - low
+
+    score = 0
+    if pair:
+        score = 60 + (high - 2) * 3.0
+    else:
+        score = 28 + (high - 2) * 2.2 - gap * 2.0
+        if suited:
+            score += 5.5
+        # small connector bonus
+        if gap == 1 and high >= 9:
+            score += 3
+        if high >= 12 and low >= 9:
+            score += 3
+    return max(10, min(95, score))
+
+def preflop_advice(score, position, stack_bb):
+    early = position in ("UTG", "MP")
+    late = position in ("CO", "BTN")
+    blinds = position in ("SB", "BB")
+
+    # Stack depth heuristic (very simple)
+    shallow = stack_bb <= 20
+    deep = stack_bb >= 60
+
+    if score >= 78:
+        return ("Subir (raise)", "Mano fuerte. En general quieres construir el bote y tomar iniciativa.", "Iniciativa: ser quien apuesta primero suele dar ventaja.")
+    if score >= 60:
+        if late or blinds:
+            return ("Subir (raise)", "Buena mano con ventaja de posición o ciegas: presiona rangos más amplios.", "Rango: conjunto de manos probables del rival.")
+        return ("Pagar o subir (call/raise)", "Jugable, pero en posiciones tempranas conviene disciplina y tamaño correcto.", "Posición: actuar después te da información.")
+    if score >= 45:
+        if late and deep and not shallow:
+            return ("Pagar (call) si es barato", "Mano especulativa: puede conectar fuerte en el flop si el costo es razonable.", "Implied odds: ganar más cuando conectas fuerte.")
+        if shallow:
+            return ("Foldear (fold) con más frecuencia", "Con stack corto, las manos marginales pierden valor.", "Stack BB: profundidad en ciegas grandes.")
+        return ("Foldear a menudo", "Mano marginal. Espera spots mejores.", "Disciplina: evitar spots negativos protege tu winrate.")
+    return ("Foldear (fold)", "La rentabilidad viene de seleccionar spots. Esta mano rara vez compensa el riesgo.", "Fold equity: valor cuando tu rival foldea ante presión.")
+
+# ---------------------------
+# Calm, neutral messages (no “rabia”)
+# ---------------------------
+CALM_LINES = [
+    "Tu decisión es buena si está alineada con la información disponible, no con el resultado.",
+    "En póker, una buena línea se mide en el largo plazo. Aquí buscamos consistencia.",
+    "El objetivo es elegir spots con ventaja. Si no la hay, retirarse es una jugada profesional.",
+    "Respira, revisa pot odds y equity. Luego decide con calma.",
+    "Lo importante: proceso claro → decisión clara."
+]
+def calm_line():
+    return random.choice(CALM_LINES)
+
+# ---------------------------
+# Session State
+# ---------------------------
+def reset_hand():
+    st.session_state.stage = "preflop"
+    st.session_state.hero = ["", ""]
+    st.session_state.pos = "BTN"
+    st.session_state.stack_bb = 50
+    st.session_state.board = []
+    st.session_state.pot_bb = 3.0
+    st.session_state.call_bb = 1.0
+    st.session_state.opps = 1
+    st.session_state.last_equity = None
+    st.session_state.last_best = None
+
+if "stage" not in st.session_state:
+    reset_hand()
+
+# ---------------------------
+# UI helpers
+# ---------------------------
+def card_options():
+    # Canonical "As" "Th" etc; show pretty label
+    opts = [""]
+    for r in RANKS[::-1]:
+        for s in SUITS:
+            opts.append(r+s)
+    return opts
+
+def pretty_cards(cards):
+    return " ".join(card_str(c) for c in cards if c)
+
+def street_name(stage):
+    return {"preflop":"PREFLOP", "flop":"FLOP", "turn":"TURN", "river":"RIVER"}[stage]
+
+def glossary(stage):
+    if stage == "preflop":
+        return [
+            ("Rango", "Conjunto de manos que juegas según posición y acción previa."),
+            ("Open raise", "Primera subida preflop cuando nadie subió antes."),
+            ("3-bet", "Resubida: subir después de que alguien ya subió."),
+        ]
+    if stage == "flop":
+        return [
+            ("Textura", "Cómo el board conecta (proyectos de escalera/color, pares, etc.)."),
+            ("C-bet", "Apuesta de continuación del agresor preflop."),
+            ("Proyecto", "Mano que aún no es fuerte, pero puede mejorar (draw)."),
+        ]
+    if stage == "turn":
+        return [
+            ("Outs", "Cartas que mejoran tu mano en la siguiente calle."),
+            ("Pot odds", "Costo de pagar vs tamaño del bote (equity mínima necesaria)."),
+            ("Polarizar", "Apostar fuerte con manos muy buenas o faroles."),
+        ]
+    return [
+        ("Value bet", "Apuesta buscando que te paguen manos peores."),
+        ("Bluff", "Apuesta para que el rival foldee una mano mejor."),
+        ("Showdown", "Cuando se muestran las manos al final."),
+    ]
+
+def required_equity(pot_bb, call_bb):
+    if call_bb <= 0:
+        return 0.0
+    return call_bb / (pot_bb + call_bb)
+
+def advice_postflop(equity, req, stage, stack_bb):
+    # Very practical, conditional guidance
+    margin = 0.05  # 5% buffer
+    if equity is None:
+        return ("Datos incompletos", "Completa mano/board para calcular.", "Equity: probabilidad aproximada de ganar en el showdown.")
+    if call_bb <= 0:
+        return ("Plan", "Si no hay costo por pagar, puedes elegir apostar por valor o controlar el bote según textura.", "Control del bote: mantener el bote manejable con manos medias.")
+    if equity >= req + 0.10:
+        return ("Seguir con más confianza", f"Tu equity supera claramente la equity mínima (pot odds). Considera pagar o subir según dinámica.", "Pot odds: equity mínima para que pagar sea rentable.")
+    if equity >= req + margin:
+        return ("Seguir (call) es razonable", f"Tu equity está apenas por encima de la equity mínima. Decide según posición y riesgos del board.", "Posición: actuar último te permite decisiones más precisas.")
+    if equity >= req - margin:
+        return ("Zona fina", f"Estás cerca del umbral. Si hay presión fuerte o el board empeora tu rango, foldear es válido.", "Umbral: cuando el pago deja de ser rentable por pot odds.")
+    return ("Foldear suele ser correcto", f"Tu equity está por debajo de lo requerido por pot odds. Esperar un spot mejor protege tu stack.", "Disciplina: evitar pagos negativos mantiene tu BB/100.")
+
+# ---------------------------
+# Header (always visible)
+# ---------------------------
+st.markdown(
+    f"""
+<div class="card">
+  <div><span class="badge">Hold'em</span><span class="badge">Móvil</span><span class="badge">Paso a paso</span></div>
+  <div style="font-size:1.05rem; font-weight:700; margin-top:.2rem;">🃏 {street_name(st.session_state.stage)}</div>
+  <div class="small" style="margin-top:.15rem;">
+    <b>Mano:</b> {pretty_cards(st.session_state.hero) or "—"} &nbsp; | &nbsp;
+    <b>Board:</b> {pretty_cards(st.session_state.board) or "—"}
+  </div>
+</div>
+""",
+    unsafe_allow_html=True,
+)
+
+# ---------------------------
+# Controls row (compact)
+# ---------------------------
+colA, colB, colC = st.columns([1,1,1], gap="small")
+with colA:
+    if st.button("🔄 Nueva mano", use_container_width=True):
+        reset_hand()
+        st.rerun()
+with colB:
+    if st.button("💾 Guardar mano", use_container_width=True):
+        hist = load_history()
+        record = {
+            "ts": datetime.now().strftime("%Y-%m-%d %H:%M"),
+            "stage": st.session_state.stage,
+            "hand": pretty_cards(st.session_state.hero),
+            "board": pretty_cards(st.session_state.board),
+            "pos": st.session_state.pos,
+            "stackBB": st.session_state.stack_bb,
+            "potBB": float(st.session_state.pot_bb),
+            "callBB": float(st.session_state.call_bb),
+            "opps": int(st.session_state.opps),
+            "equity": None if st.session_state.last_equity is None else round(st.session_state.last_equity*100, 1),
+        }
+        hist.insert(0, record)
+        hist = hist[:25]
+        save_history(hist)
+        st.success("Guardado en historial ✅")
+with colC:
+    if st.button("🧹 Borrar historial", use_container_width=True):
+        save_history([])
+        st.success("Historial borrado ✅")
+
+st.markdown(f"<div class='card small'>🧭 {calm_line()}</div>", unsafe_allow_html=True)
+
+# ---------------------------
+# Main step screens
+# ---------------------------
+opts = card_options()
+
+# Shared settings (compact)
+with st.container():
+    st.markdown("<div class='card'>", unsafe_allow_html=True)
+    c1, c2 = st.columns(2, gap="small")
+    with c1:
+        st.session_state.pos = st.selectbox("📍 Posición", ["UTG","MP","CO","BTN","SB","BB"], index=["UTG","MP","CO","BTN","SB","BB"].index(st.session_state.pos))
+        st.session_state.stack_bb = st.number_input("💰 Stack (BB)", min_value=1, max_value=500, value=int(st.session_state.stack_bb), step=1)
+    with c2:
+        st.session_state.pot_bb = st.number_input("🪙 Bote actual (BB)", min_value=0.0, max_value=500.0, value=float(st.session_state.pot_bb), step=0.5)
+        st.session_state.call_bb = st.number_input("✅ Costo para pagar (BB)", min_value=0.0, max_value=500.0, value=float(st.session_state.call_bb), step=0.5)
+    st.session_state.opps = st.selectbox("👤 Oponentes (random)", [1,2,3,4,5], index=[1,2,3,4,5].index(int(st.session_state.opps)))
+    st.markdown("</div>", unsafe_allow_html=True)
+
+# Stage: PREFLOP
+if st.session_state.stage == "preflop":
+    st.markdown("<div class='card'>", unsafe_allow_html=True)
+    h1, h2 = st.columns(2, gap="small")
+    with h1:
+        st.session_state.hero[0] = st.selectbox("🂡 Tu carta 1", opts, index=opts.index(st.session_state.hero[0]) if st.session_state.hero[0] in opts else 0)
+    with h2:
+        st.session_state.hero[1] = st.selectbox("🂡 Tu carta 2", opts, index=opts.index(st.session_state.hero[1]) if st.session_state.hero[1] in opts else 0)
+
+    ok = all(st.session_state.hero) and is_valid_unique(st.session_state.hero)
+    if not ok and any(st.session_state.hero):
+        st.warning("Las dos cartas deben ser distintas.")
+
+    if st.button("🎯 Analizar preflop", disabled=not ok, use_container_width=True):
+        score = preflop_score(st.session_state.hero)
+        act, reason, term = preflop_advice(score, st.session_state.pos, st.session_state.stack_bb)
+        st.session_state.last_equity = None
+        st.session_state.last_best = None
+
+        st.markdown("</div>", unsafe_allow_html=True)
+
+        st.markdown("<div class='card'>", unsafe_allow_html=True)
+        st.metric("Fuerza preflop (heurística)", f"{score:.0f}/100")
+        st.markdown(f"**Recomendación (condicional):** {act}\n\n- {reason}\n\n**📘 Término:** *{term}*")
+        st.markdown("</div>", unsafe_allow_html=True)
+
+        st.markdown("<div class='card small'>", unsafe_allow_html=True)
+        st.markdown("**Mini-glosario (preflop):**")
+        for k, v in glossary("preflop"):
+            st.markdown(f"- **{k}:** {v}")
+        st.markdown("</div>", unsafe_allow_html=True)
+
+        c_next, c_fold = st.columns(2, gap="small")
+        with c_next:
+            if st.button("➡️ Pasar a FLOP", use_container_width=True):
+                st.session_state.stage = "flop"
+                st.session_state.board = []
+                st.rerun()
+        with c_fold:
+            if st.button("✋ Foldear / Nueva", use_container_width=True):
+                reset_hand()
+                st.rerun()
+
+    else:
+        st.markdown("</div>", unsafe_allow_html=True)
+
+# Stage: FLOP
+elif st.session_state.stage == "flop":
+    if not all(st.session_state.hero) or not is_valid_unique(st.session_state.hero):
+        st.info("Primero elige tu mano en preflop.")
+        if st.button("⬅️ Volver a PREFLOP", use_container_width=True):
+            st.session_state.stage = "preflop"
+            st.rerun()
+    else:
+        st.markdown("<div class='card'>", unsafe_allow_html=True)
+        f1, f2, f3 = st.columns(3, gap="small")
+        b = st.session_state.board + [""] * (3 - len(st.session_state.board))
+        with f1:
+            b[0] = st.selectbox("Flop 1", opts, index=opts.index(b[0]) if b[0] in opts else 0)
+        with f2:
+            b[1] = st.selectbox("Flop 2", opts, index=opts.index(b[1]) if b[1] in opts else 0)
+        with f3:
+            b[2] = st.selectbox("Flop 3", opts, index=opts.index(b[2]) if b[2] in opts else 0)
+
+        chosen = [x for x in b if x]
+        valid = len(chosen) == 3 and is_valid_unique(st.session_state.hero + chosen)
+
+        if len(chosen) == 3 and not valid:
+            st.warning("Revisa duplicados (mano/board).")
+
+        if st.button("🔍 Analizar FLOP", disabled=not valid, use_container_width=True):
+            st.session_state.board = chosen
+            eq = monte_carlo_equity(st.session_state.hero, st.session_state.board, n_opponents=int(st.session_state.opps), iters=4500)
+            st.session_state.last_equity = eq
+
+            req = required_equity(float(st.session_state.pot_bb), float(st.session_state.call_bb))
+            outs = outs_improvement_count(st.session_state.hero, st.session_state.board)
+            act, reason, term = advice_postflop(eq, req, "flop", st.session_state.stack_bb)
+
+            cards7 = st.session_state.hero + st.session_state.board
+            best, best5 = best_hand_rank(cards7)
+            st.session_state.last_best = (best, best5)
+
+            st.markdown("</div>", unsafe_allow_html=True)
+
+            st.markdown("<div class='card'>", unsafe_allow_html=True)
+            cM1, cM2, cM3 = st.columns(3, gap="small")
+            with cM1:
+                st.metric("Equity (aprox.)", f"{eq*100:.1f}%")
+            with cM2:
+                st.metric("Equity mínima (pot odds)", f"{req*100:.1f}%")
+            with cM3:
+                st.metric("Outs (mejora 1 carta)", f"{outs}")
+            st.markdown(f"**Lectura de mano:** {hand_category_name(best)}")
+            st.markdown(f"**Recomendación (condicional):** {act}\n\n- {reason}\n\n**📘 Término:** *{term}*")
+            st.markdown("</div>", unsafe_allow_html=True)
+
+            st.markdown("<div class='card small'>", unsafe_allow_html=True)
+            st.markdown("**Mini-glosario (flop):**")
+            for k, v in glossary("flop"):
+                st.markdown(f"- **{k}:** {v}")
+            st.markdown("</div>", unsafe_allow_html=True)
+
+            c1, c2 = st.columns(2, gap="small")
+            with c1:
+                if st.button("➡️ Pasar a TURN", use_container_width=True):
+                    st.session_state.stage = "turn"
+                    st.rerun()
+            with c2:
+                if st.button("⬅️ Volver a PREFLOP", use_container_width=True):
+                    st.session_state.stage = "preflop"
+                    st.rerun()
+        else:
+            st.markdown("</div>", unsafe_allow_html=True)
+
+# Stage: TURN
+elif st.session_state.stage == "turn":
+    if len(st.session_state.board) != 3:
+        st.info("Primero completa el flop.")
+        if st.button("⬅️ Volver a FLOP", use_container_width=True):
+            st.session_state.stage = "flop"
+            st.rerun()
+    else:
+        st.markdown("<div class='card'>", unsafe_allow_html=True)
+        turn = st.selectbox("🎴 Carta del TURN", opts, index=0)
+        valid = bool(turn) and is_valid_unique(st.session_state.hero + st.session_state.board + [turn])
+        if turn and not valid:
+            st.warning("Esa carta ya está usada.")
+        if st.button("🔍 Analizar TURN", disabled=not valid, use_container_width=True):
+            st.session_state.board = st.session_state.board + [turn]
+            eq = monte_carlo_equity(st.session_state.hero, st.session_state.board, n_opponents=int(st.session_state.opps), iters=5200)
+            st.session_state.last_equity = eq
+
+            req = required_equity(float(st.session_state.pot_bb), float(st.session_state.call_bb))
+            outs = outs_improvement_count(st.session_state.hero, st.session_state.board)
+            act, reason, term = advice_postflop(eq, req, "turn", st.session_state.stack_bb)
+
+            best, best5 = best_hand_rank(st.session_state.hero + st.session_state.board)
+            st.session_state.last_best = (best, best5)
+
+            st.markdown("</div>", unsafe_allow_html=True)
+
+            st.markdown("<div class='card'>", unsafe_allow_html=True)
+            cM1, cM2, cM3 = st.columns(3, gap="small")
+            with cM1:
+                st.metric("Equity (aprox.)", f"{eq*100:.1f}%")
+            with cM2:
+                st.metric("Equity mínima (pot odds)", f"{req*100:.1f}%")
+            with cM3:
+                st.metric("Outs (mejora 1 carta)", f"{outs}")
+            st.markdown(f"**Lectura de mano:** {hand_category_name(best)}")
+            st.markdown(f"**Recomendación (condicional):** {act}\n\n- {reason}\n\n**📘 Término:** *{term}*")
+            st.markdown("</div>", unsafe_allow_html=True)
+
+            st.markdown("<div class='card small'>", unsafe_allow_html=True)
+            st.markdown("**Mini-glosario (turn):**")
+            for k, v in glossary("turn"):
+                st.markdown(f"- **{k}:** {v}")
+            st.markdown("</div>", unsafe_allow_html=True)
+
+            c1, c2 = st.columns(2, gap="small")
+            with c1:
+                if st.button("➡️ Pasar a RIVER", use_container_width=True):
+                    st.session_state.stage = "river"
+                    st.rerun()
+            with c2:
+                if st.button("⬅️ Volver a FLOP", use_container_width=True):
+                    st.session_state.stage = "flop"
+                    # remove turn card
+                    st.session_state.board = st.session_state.board[:3]
+                    st.rerun()
+        else:
+            st.markdown("</div>", unsafe_allow_html=True)
+
+# Stage: RIVER
+elif st.session_state.stage == "river":
+    if len(st.session_state.board) != 4:
+        st.info("Primero completa el turn.")
+        if st.button("⬅️ Volver a TURN", use_container_width=True):
+            st.session_state.stage = "turn"
+            st.rerun()
+    else:
+        st.markdown("<div class='card'>", unsafe_allow_html=True)
+        river = st.selectbox("🎴 Carta del RIVER", opts, index=0)
+        valid = bool(river) and is_valid_unique(st.session_state.hero + st.session_state.board + [river])
+        if river and not valid:
+            st.warning("Esa carta ya está usada.")
+        if st.button("🏁 Análisis final (RIVER)", disabled=not valid, use_container_width=True):
+            st.session_state.board = st.session_state.board + [river]
+            eq = monte_carlo_equity(st.session_state.hero, st.session_state.board, n_opponents=int(st.session_state.opps), iters=6500)
+            st.session_state.last_equity = eq
+
+            req = required_equity(float(st.session_state.pot_bb), float(st.session_state.call_bb))
+            # no outs on river
+            act, reason, term = advice_postflop(eq, req, "river", st.session_state.stack_bb)
+
+            best, best5 = best_hand_rank(st.session_state.hero + st.session_state.board)
+            st.session_state.last_best = (best, best5)
+
+            st.markdown("</div>", unsafe_allow_html=True)
+
+            st.markdown("<div class='card'>", unsafe_allow_html=True)
+            cM1, cM2 = st.columns(2, gap="small")
+            with cM1:
+                st.metric("Equity (aprox.)", f"{eq*100:.1f}%")
+            with cM2:
+                st.metric("Equity mínima (pot odds)", f"{req*100:.1f}%")
+            st.markdown(f"**Lectura de mano final:** {hand_category_name(best)}")
+            st.markdown(f"**Recomendación (condicional):** {act}\n\n- {reason}\n\n**📘 Término:** *{term}*")
+            st.markdown("</div>", unsafe_allow_html=True)
+
+            st.markdown("<div class='card small'>", unsafe_allow_html=True)
+            st.markdown("**Mini-glosario (river):**")
+            for k, v in glossary("river"):
+                st.markdown(f"- **{k}:** {v}")
+            st.markdown("</div>", unsafe_allow_html=True)
+
+            c1, c2 = st.columns(2, gap="small")
+            with c1:
+                if st.button("💾 Guardar + Nueva mano", use_container_width=True):
+                    hist = load_history()
+                    record = {
+                        "ts": datetime.now().strftime("%Y-%m-%d %H:%M"),
+                        "stage": "river",
+                        "hand": pretty_cards(st.session_state.hero),
+                        "board": pretty_cards(st.session_state.board),
+                        "pos": st.session_state.pos,
+                        "stackBB": st.session_state.stack_bb,
+                        "potBB": float(st.session_state.pot_bb),
+                        "callBB": float(st.session_state.call_bb),
+                        "opps": int(st.session_state.opps),
+                        "equity": round(eq*100, 1),
+                        "made_hand": hand_category_name(best),
+                    }
+                    hist.insert(0, record)
+                    hist = hist[:25]
+                    save_history(hist)
+                    reset_hand()
+                    st.rerun()
+            with c2:
+                if st.button("⬅️ Volver a TURN", use_container_width=True):
+                    st.session_state.stage = "turn"
+                    st.session_state.board = st.session_state.board[:4]
+                    st.rerun()
+        else:
+            st.markdown("</div>", unsafe_allow_html=True)
+
+# ---------------------------
+# History (compact)
+# ---------------------------
+hist = load_history()
+if hist:
+    st.markdown("<div class='card'>", unsafe_allow_html=True)
+    st.markdown("**📊 Historial (últimas manos)**")
+    # Show a compact table-like view without heavy dataframe height
+    for i, h in enumerate(hist[:8], start=1):
+        eqtxt = "—" if h.get("equity") is None else f"{h.get('equity')}%"
+        st.markdown(
+            f"<div class='small'><b>{i}.</b> {h.get('ts','')} · {h.get('hand','')} · "
+            f"Pos {h.get('pos','')} · {h.get('stackBB','')}BB · Eq {eqtxt}</div>",
+            unsafe_allow_html=True
+        )
+    st.markdown("</div>", unsafe_allow_html=True)
+else:
+    st.markdown("<div class='card small'>📌 Historial vacío. Guarda una mano y aparecerá aquí.</div>", unsafe_allow_html=True)
+```
+
+---
+
+```txt
+# requirements.txt
+streamlit>=1.34
+```
+
+---
+
+## Cómo subirlo a GitHub (rápido desde el celular)
+
+1. Crea un repo en GitHub (por ejemplo: `holdem-pocket-coach`).
+2. Crea estos archivos en el repo:
+
+   * `app.py` (pega el código completo)
+   * `requirements.txt` (pega el contenido)
+3. (Opcional) agrega una carpeta vacía `data/` (la app la crea si no existe).
+4. En Streamlit Community Cloud: conecta el repo y selecciona `app.py`.
+
+---
+
+## Lo que hace “bien” vs tu ejemplo
+
+* ✅ **No es una sola pantalla larguísima**: va por pasos (preflop/flop/turn/river) → **menos scroll**.
+* ✅ **Equity real** por simulación Monte Carlo (no un “% de fuerza” inventado).
+* ✅ **Pot odds** (bote + costo a pagar en BB) → decisión más coherente.
+* ✅ **Glosario por calle** para aprender terminología sin abrumarte.
+* ✅ **Historial acumulativo** (JSON) listo para GitHub.
+* ✅ Mensajes de enfoque/claridad **sin hablar de “rabia”** ni emociones explícitas.
+
+---
+
+Si quieres, en la siguiente iteración te lo dejo aún más “tipo app”:
+
+* botones grandes “**Estoy en nueva mano / Ya vi flop / Ya vi turn**”
+* selector “**¿hubo subida antes de mí?**” para que el consejo preflop sea más real
+* opción “**vs 2–6 jugadores**” (ya está) y “**rango del rival: tight/normal/loose**” para afinar equity.
