@@ -1,5 +1,3 @@
-
-
 html_code = """
 <!DOCTYPE html>
 <html>
