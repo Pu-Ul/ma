@@ -1,5 +1,7 @@
 import streamlit as st, itertools, json, os, random, math
-from datetime import datetime st.set_page_config(page_title="Hold'em Pocket Coach ✅", layout="centered", initial_sidebar_state="collapsed")
+from datetime import datetime
+
+st.set_page_config(page_title="Hold'em Pocket Coach ✅", layout="centered", initial_sidebar_state="collapsed")
 
 BUILD_ID = datetime.utcnow().strftime("%Y%m%d-%H%M%S")
 
